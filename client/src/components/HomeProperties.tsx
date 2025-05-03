@@ -57,7 +57,7 @@ const HomeListings = () => {
     <div className="flex justify-center items-center min-h-screen w-full">
       <div className="flex flex-col items-center text-center p-4">
         <div className="text-red-500 text-lg mb-2">Oops! Something went wrong</div>
-        <p className="text-sm text-gray-600">We couldn't fetch the properties. Please try again.</p>
+        <p className="text-sm text-gray-600">We couldn&apos;t fetch the properties. Please try again.</p>
       </div>
     </div>
   );

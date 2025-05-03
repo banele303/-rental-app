@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Property } from "@/types/property";
-
+import Image from "next/image";
 interface PropertyFormProps {
   initialData?: Property;
   onSubmit: (formData: FormData) => Promise<void>;
@@ -27,8 +27,8 @@ export const PropertyForm = ({
     setSelectedFiles(files);
 
     // Create preview URLs for selected files
-    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,9 +36,9 @@ export const PropertyForm = ({
     if (!formRef.current) return;
 
     const formData = new FormData(formRef.current);
-    
+
     // Append selected files
-    selectedFiles.forEach(file => {
+    selectedFiles.forEach((file) => {
       formData.append("photos", file);
     });
 
@@ -46,7 +46,7 @@ export const PropertyForm = ({
   };
 
   const removeImage = (index: number) => {
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -55,7 +55,7 @@ export const PropertyForm = ({
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Property Name
@@ -102,7 +102,7 @@ export const PropertyForm = ({
         {/* Location Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Location</h3>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Address
@@ -174,7 +174,7 @@ export const PropertyForm = ({
         {/* Property Details */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Property Details</h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -238,7 +238,7 @@ export const PropertyForm = ({
         {/* Additional Details */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Additional Details</h3>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Security Deposit
@@ -295,15 +295,28 @@ export const PropertyForm = ({
         {/* Photos */}
         <div className="col-span-2 space-y-4">
           <h3 className="text-lg font-semibold">Photos</h3>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {previewUrls.map((url, index) => (
               <div key={index} className="relative">
-                <img
+                {/* <img
                   src={url}
                   alt={`Property photo ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg"
-                />
+                /> */}
+
+                <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                  <Image
+                    src={url}
+                    alt={`Property photo ${index + 1}`}
+                    fill
+                    className="object-cover rounded-lg"
+                    unoptimized={
+                      url.startsWith("blob:") || url.startsWith("data:")
+                    }
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
@@ -354,4 +367,4 @@ export const PropertyForm = ({
       </div>
     </form>
   );
-}; 
+};

@@ -4,7 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, Loader2, Save } from "lucide-react";
 import { getCurrentUser, fetchAuthSession } from "aws-amplify/auth";
-
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -588,11 +588,18 @@ export default function EditProperty({ params }: any) {
                       key={index}
                       className="relative aspect-square rounded-md overflow-hidden border border-[#2D3748]"
                     >
-                      <img
-                        src={url || "/placeholder.svg"}
-                        alt={`Property photo ${index + 1}`}
-                        className="object-cover w-full h-full"
-                      />
+                    
+
+<div className="relative w-full h-full">
+  <Image
+    src={url || "/placeholder.svg"}
+    alt={`Property photo ${index + 1}`}
+    fill
+    className="object-cover"
+    unoptimized={url.startsWith("blob:") || url.startsWith("data:")}
+  />
+</div>
+
                     </div>
                   ))}
                 </div>

@@ -152,7 +152,7 @@ const FeaturedTestimonial = () => (
       </div>
     </div>
     <p className="text-gray-200 italic text-sm">
-      "I found my dream apartment in just 3 days using this platform. The verification process gave me confidence in my choice!"
+    &quot;I found my dream apartment in just 3 days using this platform. The verification process gave me confidence in my choice!&quot;
     </p>
   </motion.div>
 );

@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  ControllerRenderProps,
-  FieldValues,
-  useFormContext,
-  useFieldArray,
-} from "react-hook-form";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -30,6 +25,7 @@ import "filepond/dist/filepond.min.css";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
+import Image from "next/image";
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -85,10 +81,9 @@ export const CustomFormField = ({
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
-                className={props.className}
                 disabled={props.disabled}
               >
-                <SelectTrigger>
+                <SelectTrigger className={props.className}>
                   <SelectValue placeholder={`Select ${label}`} />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,17 +98,20 @@ export const CustomFormField = ({
               <div>
                 <Select
                   onValueChange={(value) => {
-                    const currentValues = Array.isArray(field.value) ? field.value : [];
+                    const currentValues = Array.isArray(field.value)
+                      ? field.value
+                      : [];
                     if (currentValues.includes(value)) {
-                      field.onChange(currentValues.filter((v: string) => v !== value));
+                      field.onChange(
+                        currentValues.filter((v: string) => v !== value)
+                      );
                     } else {
                       field.onChange([...currentValues, value]);
                     }
                   }}
-                  className={props.className}
                   disabled={props.disabled}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={props.className}>
                     <SelectValue placeholder={`Select ${label}`}>
                       {Array.isArray(field.value) && field.value.length > 0
                         ? `${field.value.length} selected`
@@ -122,11 +120,12 @@ export const CustomFormField = ({
                   </SelectTrigger>
                   <SelectContent>
                     {options.map((option) => (
-                      <SelectItem 
-                        key={option.value} 
+                      <SelectItem
+                        key={option.value}
                         value={option.value}
                         className={
-                          Array.isArray(field.value) && field.value.includes(option.value)
+                          Array.isArray(field.value) &&
+                          field.value.includes(option.value)
                             ? "bg-primary-500/20"
                             : ""
                         }
@@ -143,11 +142,16 @@ export const CustomFormField = ({
                         key={value}
                         className="flex items-center gap-1 bg-primary-500/20 text-primary-700 px-2 py-1 rounded-md"
                       >
-                        <span>{options.find(opt => opt.value === value)?.label || value}</span>
+                        <span>
+                          {options.find((opt) => opt.value === value)?.label ||
+                            value}
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
-                            field.onChange(field.value.filter((v: string) => v !== value));
+                            field.onChange(
+                              field.value.filter((v: string) => v !== value)
+                            );
                           }}
                           className="text-primary-700 hover:text-primary-900"
                         >
@@ -165,17 +169,24 @@ export const CustomFormField = ({
                 type="number"
                 className={props.inputClassName}
                 onChange={(e) => {
-                  const value = e.target.value === "" ? "" : Number(e.target.value);
+                  const value =
+                    e.target.value === "" ? "" : Number(e.target.value);
                   field.onChange(value);
                 }}
               />
             ) : type === "textarea" ? (
-              <Textarea {...field} {...props} className={props.inputClassName} />
+              <Textarea
+                {...field}
+                {...props}
+                onChange={(e) => field.onChange(e.target.value)}
+                className={props.inputClassName}
+              />
             ) : type === "switch" ? (
               <Switch
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                {...props}
+                disabled={props.disabled}
+                className={props.inputClassName}
               />
             ) : type === "file" ? (
               <div className="space-y-4">
@@ -191,21 +202,27 @@ export const CustomFormField = ({
                   labelIdle='Drag & Drop your images or <span class="filepond--label-action">Browse</span>'
                   credits={false}
                   acceptedFileTypes={["image/*"]}
-                  fileValidateTypeDetectType={(source, type) =>
-                    new Promise((resolve, reject) => {
-                      resolve(type);
-                    })
-                  }
                 />
                 {Array.isArray(field.value) && field.value.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                     {field.value.map((file: File, index: number) => (
                       <div key={index} className="relative group">
-                        <img
+                        {/* <img
                           src={URL.createObjectURL(file)}
                           alt={`Preview ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg"
-                        />
+                        /> */}
+
+                        <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                          <Image
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${index + 1}`}
+                            fill
+                            className="object-cover rounded-lg"
+                            unoptimized
+                          />
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -223,7 +240,12 @@ export const CustomFormField = ({
                 )}
               </div>
             ) : (
-              <Input type={type} {...field} {...props} className={props.inputClassName} />
+              <Input
+                type={type}
+                {...field}
+                {...props}
+                className={props.inputClassName}
+              />
             )}
           </FormControl>
           <FormMessage />
@@ -240,7 +262,7 @@ interface MultiInputFieldProps {
   inputClassName?: string;
 }
 
-const MultiInputField: React.FC<MultiInputFieldProps> = ({
+export const MultiInputField: React.FC<MultiInputFieldProps> = ({
   name,
   control,
   placeholder,

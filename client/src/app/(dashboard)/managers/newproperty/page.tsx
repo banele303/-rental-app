@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
+import Image from 'next/image';
 // Components
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
   DollarSign,
   Home,
   MapPin,
-  Image,
+  // Image,
   Check,
   ChevronDown,
   ChevronUp,
@@ -29,6 +29,7 @@ import {
   Upload,
   Loader2,
   ArrowLeft,
+  ImageDown,
 } from "lucide-react";
 
 // Data & API
@@ -410,7 +411,7 @@ const NewProperty = () => {
               {/* Photos */}
               <FormSection 
                 title="Property Photos" 
-                icon={<Image size={20} />}
+                icon={<ImageDown size={20} />}
               >
                 <div>
                   <CustomFormField
@@ -460,11 +461,19 @@ const NewProperty = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {uploadedFiles.map((file, index) => (
                           <div key={index} className="relative bg-gray-800 rounded-md p-1 h-20 flex items-center justify-center overflow-hidden">
-                            <img 
+                            {/* <img 
                               src={URL.createObjectURL(file)} 
                               alt={`Preview ${index}`} 
                               className="h-full w-full object-cover rounded"
-                            />
+                            /> */}
+
+<Image
+  src={URL.createObjectURL(file)}
+  alt={`Preview ${index}`}
+  width={300}
+  height={200}
+  className="w-full h-32 object-cover rounded-lg"
+/>
                           </div>
                         ))}
                       </div>

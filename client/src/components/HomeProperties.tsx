@@ -5,6 +5,8 @@ import { useGetAuthUserQuery, useGetPropertiesQuery, useGetTenantQuery, useAddFa
 import { useAppSelector } from "@/state/redux";
 import { Property } from "@/types/prismaTypes";
 import { Heart, MapPin, Bed, Bath, Maximize, Star } from 'lucide-react';
+import Link from "next/link";
+import Image from "next/image";
 
 const HomeListings = () => {
   const { data: authUser } = useGetAuthUserQuery();
@@ -118,14 +120,26 @@ const PropertyCard = ({ property, isFavorite, onFavoriteToggle, showFavoriteButt
     >
       {/* Image container */}
       <div className="relative h-56 overflow-hidden">
-        <a href={propertyLink} className="block h-full">
+        {/* <a href={propertyLink} className="block h-full">
           <img 
             src={property.images?.[0] || "/api/placeholder/400/320"} 
             alt={property.title} 
             className={`w-full h-full object-cover transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
           />
         </a>
-        
+         */}
+
+<Link href={propertyLink} className="block h-full relative">
+  <div className="relative w-full h-full">
+    <Image
+      src={property.images?.[0] || "/api/placeholder/400/320"}
+      alt={property.title}
+      fill
+      className={`object-cover transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
+      unoptimized={property.images?.[0]?.startsWith("blob:") || property.images?.[0]?.startsWith("data:")}
+    />
+  </div>
+</Link>
         {/* Badge for property type */}
         <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">
           {property.type}

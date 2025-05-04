@@ -59,7 +59,7 @@ export default function PropertyCard({
  
 }: PropertyCardProps) {
   const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] 
+    property.photoUrls?.[0] || "/placeholder.svg"
   );
   const [isHovered, setIsHovered] = useState(false);
 
@@ -89,15 +89,16 @@ export default function PropertyCard({
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
         <Image
-          src={imgSrc as string}
+          src={imgSrc || "/placeholder.svg"}
           alt={property.name}
           fill
           className={`object-cover transition-transform duration-500 ${
             isHovered ? "scale-110" : "scale-100"
           }`}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImgSrc("/placeholder.svg?height=400&width=600")}
-          priority
+          onError={(err) => setImgSrc(`image:-----ERRR ${err} for ${imgSrc}`)}
+          // unoptimized={true} // Try this to bypass Next.js image optimization
+          loading="eager" // Instead of priority
         />
 
         {/* Overlay gradient */}

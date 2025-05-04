@@ -58,9 +58,12 @@ export default function PropertyCardDashboard({
   propertyLink,
   onDelete,
 }: PropertyCardProps) {
+
   const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] || "/placeholder.jpg?height=400&width=600"
+    property.photoUrls?.[0] 
   );
+  
+    
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
 
@@ -98,14 +101,14 @@ export default function PropertyCardDashboard({
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
         <Image
-          src={imgSrc || "/placeholder.jpg"}
+          src={imgSrc ?? "/placeholder.jpg"}
           alt={property.name}
           fill
           className={`object-cover transition-transform duration-500 ${
             isHovered ? "scale-110" : "scale-100"
           }`}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImgSrc("/placeholder.jpg?height=400&width=600")}
+          onError={(err) => setImgSrc("Image cantload")}
           priority
         />
 

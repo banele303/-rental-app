@@ -59,7 +59,7 @@ export default function PropertyCard({
  
 }: PropertyCardProps) {
   const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] || "/placeholder.svg?height=400&width=600"
+    property.photoUrls?.[0] 
   );
   const [isHovered, setIsHovered] = useState(false);
 
@@ -89,7 +89,7 @@ export default function PropertyCard({
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
         <Image
-          src={imgSrc || "/placeholder.svg"}
+          src={imgSrc as string}
           alt={property.name}
           fill
           className={`object-cover transition-transform duration-500 ${

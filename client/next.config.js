@@ -1,13 +1,7 @@
+// import type { NextConfig } from "next";
+
 const nextConfig = {
-  experimental: {
-    serverActions: {},
-  },
   images: {
-    domains: [
-      "res.cloudinary.com",
-      "lh3.googleusercontent.com",
-      "platform-lookaside.fbsbx.com",
-    ],
     remotePatterns: [
       {
         protocol: "https",

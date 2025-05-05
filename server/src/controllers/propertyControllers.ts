@@ -2,7 +2,7 @@ import "dotenv/config"
 import type { Request, Response } from "express"
 import { PrismaClient, Prisma } from "@prisma/client"
 import { wktToGeoJSON } from "@terraformer/wkt"
-import { S3Client, type ObjectCannedACL, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, DeleteObjectCommand, PutObjectCommand, PutObjectAclCommand } from "@aws-sdk/client-s3"
 import axios from "axios"
 
 const prisma = new PrismaClient()
@@ -68,22 +68,32 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     console.log(`Starting S3 upload for file: ${key}`)
     console.log(`File mimetype: ${contentType}, size: ${file.buffer.length} bytes`)
 
-    // Use PutObject directly instead of Upload utility for better control
-    const command = {
+    // Use PutObject directly with explicit ACL
+    const putCommand = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
       Body: file.buffer,
       ContentType: contentType,
-      ACL: "public-read" as ObjectCannedACL,
+      ACL: "public-read",
       CacheControl: "max-age=31536000",
       ContentDisposition: "inline",
-    }
+    })
 
-    // Use the S3Client directly
-    await s3Client.send(new PutObjectCommand(command))
+    // Upload the object
+    await s3Client.send(putCommand)
     console.log(`Successfully uploaded file: ${key}`)
 
-    // Return a correctly formatted URL with the proper domain format
+    // Explicitly set ACL to public-read as a separate operation to ensure it's applied
+    const aclCommand = new PutObjectAclCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      ACL: "public-read",
+    })
+
+    await s3Client.send(aclCommand)
+    console.log(`Successfully set ACL to public-read for ${key}`)
+
+    // Return a correctly formatted URL
     const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
     console.log(`Generated file URL: ${fileUrl}`)
 

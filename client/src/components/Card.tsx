@@ -91,7 +91,7 @@ export default function PropertyCard({
         <div className="relative w-full h-full">
           {!imgError ? (
             <Image
-              src={imgSrc || "/placeholder.svg"}
+              src="https://realstatee.s3.eu-north-1.amazonaws.com/properties/Screenshot+2025-04-29+212529.png"
               alt={property.name}
               fill
               loader={loaderFunc}

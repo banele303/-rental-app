@@ -39,7 +39,7 @@ const s3Client = new client_s3_1.S3Client({
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
 });
-// Helper function to upload file to S3
+// Enhanced version of uploadFileToS3 with better error handling and debugging
 function uploadFileToS3(file) {
     return __awaiter(this, void 0, void 0, function* () {
         // Validate S3 configuration
@@ -49,21 +49,51 @@ function uploadFileToS3(file) {
         if (!process.env.AWS_REGION) {
             throw new Error("AWS_REGION is not configured in environment variables");
         }
+        // Validate file
+        if (!file || !file.buffer) {
+            throw new Error("Invalid file data - missing file buffer");
+        }
+        // Create a more unique file name to prevent collisions
+        const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const safeFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '');
         const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
-            Key: `properties/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '')}`,
+            Key: `properties/${uniquePrefix}-${safeFileName}`,
             Body: file.buffer,
             ContentType: file.mimetype,
             ACL: 'public-read',
+            // Make sure object is readable by everyone
+            CacheControl: 'public, max-age=86400',
         };
         try {
+            console.log(`Starting S3 upload for file: ${params.Key}`);
+            console.log(`File mimetype: ${file.mimetype}, size: ${file.buffer.length} bytes`);
             const upload = new lib_storage_1.Upload({
                 client: s3Client,
                 params: params,
             });
-            yield upload.done();
+            const result = yield upload.done();
             console.log(`Successfully uploaded file: ${params.Key}`);
-            return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+            console.log(`Upload result:`, JSON.stringify(result));
+            // Construct URL in a consistent way
+            const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+            console.log(`Generated file URL: ${fileUrl}`);
+            // Verify the file is accessible by making a HEAD request (optional)
+            try {
+                const axios = require('axios');
+                const response = yield axios.head(fileUrl, { timeout: 5000 });
+                console.log(`File verification status: ${response.status}`);
+            }
+            catch (verificationError) {
+                if (verificationError && typeof verificationError === 'object' && 'message' in verificationError) {
+                    console.warn(`Warning: Could not verify file accessibility: ${verificationError.message}`);
+                }
+                else {
+                    console.warn('Warning: Could not verify file accessibility:', verificationError);
+                }
+                // Continue despite verification failure - just log the warning
+            }
+            return fileUrl;
         }
         catch (error) {
             console.error('Error uploading to S3:', error);
@@ -71,6 +101,35 @@ function uploadFileToS3(file) {
         }
     });
 }
+// // Helper function to upload file to S3
+// async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
+//   // Validate S3 configuration
+//   if (!process.env.AWS_BUCKET_NAME) {
+//     throw new Error("AWS_BUCKET_NAME is not configured in environment variables");
+//   }
+//   if (!process.env.AWS_REGION) {
+//     throw new Error("AWS_REGION is not configured in environment variables");
+//   }
+//   const params = {
+//     Bucket: process.env.AWS_BUCKET_NAME,
+//     Key: `properties/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '')}`,
+//     Body: file.buffer,
+//     ContentType: file.mimetype,
+//     ACL: 'public-read' as ObjectCannedACL,
+//   };
+//   try {
+//     const upload = new Upload({
+//       client: s3Client,
+//       params: params,
+//     });
+//     await upload.done();
+//     console.log(`Successfully uploaded file: ${params.Key}`);
+//     return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+//   } catch (error) {
+//     console.error('Error uploading to S3:', error);
+//     throw new Error(`Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
+//   }
+// }
 // Helper function to delete a file from S3
 function deleteFileFromS3(fileUrl) {
     return __awaiter(this, void 0, void 0, function* () {

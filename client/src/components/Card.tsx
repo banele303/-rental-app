@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import type { ImageLoaderProps } from "next/image";
 import {
   Bath,
   Bed,
@@ -56,14 +56,21 @@ export default function PropertyCard({
   propertyLink,
   onEdit,
   onDelete,
- 
 }: PropertyCardProps) {
 
-  
+
+ 
+
+  const loaderFunc = ({ src }: ImageLoaderProps) => {
+    return src;
+  };
+
   const [imgSrc, setImgSrc] = useState(
     property.photoUrls?.[0] || "/placeholder.jpg"
+
   );
   const [isHovered, setIsHovered] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,8 +88,6 @@ export default function PropertyCard({
     }
   };
 
-
-
   return (
     <Card
       className="group overflow-hidden transition-all duration-300 hover:shadow-xl border border-[#333] bg-black rounded-xl relative"
@@ -90,18 +95,26 @@ export default function PropertyCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
-
-
-
-      <img
-    src={imgSrc}
-    alt={property.name}
-    onError={() => setImgSrc("/placeholder.jpg")}
-    className={`object-cover transition-transform duration-500 ${
-      isHovered ? "scale-110" : "scale-100"
-    }`}
-    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-  />
+        <div
+          className={`"opacity-100" : "opacity-0"
+          } transition-opacity duration-500`}
+        >
+          <Image
+            src={imgSrc}
+            alt={property.name}
+            width={100}
+            height={100}
+            loader={loaderFunc}
+            priority={true}
+            placeholder="blur"
+            blurDataURL="/placeholder.jpg"
+            className={
+              "rounded-lg transition-transform duration-300 hover:scale-105"
+            }
+            onLoadingComplete={() => setIsLoaded(true)}
+            unoptimized={true}
+          />
+        </div>
         {/* <Image
           src={imgSrc || "/placeholder.svg"}
           alt={property.name}

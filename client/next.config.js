@@ -11,7 +11,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.amazonaws.com",
+        hostname: "realstatee.s3.eu-north-1.amazonaws.com",
         port: "",
         pathname: "/**",
       },

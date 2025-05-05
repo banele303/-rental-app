@@ -17,8 +17,7 @@ const s3Client = new S3Client({
   },
 });
 
-
-// Enhanced version of uploadFileToS3 with better error handling and debugging
+// Enhanced upload function with better error handling, double-check ACL, and consistent URL construction
 async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
   // Validate S3 configuration
   if (!process.env.AWS_BUCKET_NAME) {
@@ -37,10 +36,11 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
   // Create a more unique file name to prevent collisions
   const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
   const safeFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '');
+  const key = `properties/${uniquePrefix}-${safeFileName}`;
   
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `properties/${uniquePrefix}-${safeFileName}`,
+    Key: key,
     Body: file.buffer,
     ContentType: file.mimetype,
     ACL: 'public-read' as ObjectCannedACL,
@@ -52,6 +52,7 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     console.log(`Starting S3 upload for file: ${params.Key}`);
     console.log(`File mimetype: ${file.mimetype}, size: ${file.buffer.length} bytes`);
     
+    // Use the Upload utility for better handling of large files
     const upload = new Upload({
       client: s3Client,
       params: params,
@@ -59,33 +60,31 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
 
     const result = await upload.done();
     console.log(`Successfully uploaded file: ${params.Key}`);
-    console.log(`Upload result:`, JSON.stringify(result));
-
-    // Construct URL in a consistent way
-    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
-    console.log(`Generated file URL: ${fileUrl}`);
     
-    // Verify the file is accessible by making a HEAD request (optional)
+    // Explicitly set ACL again to ensure it's public-read
+    // This helps in some cases where the initial upload doesn't properly set the ACL
     try {
-      const axios = require('axios');
-      const response = await axios.head(fileUrl, { timeout: 5000 });
-      console.log(`File verification status: ${response.status}`);
-    } catch (verificationError) {
-      if (verificationError && typeof verificationError === 'object' && 'message' in verificationError) {
-        console.warn(`Warning: Could not verify file accessibility: ${(verificationError as any).message}`);
-      } else {
-        console.warn('Warning: Could not verify file accessibility:', verificationError);
-      }
-      // Continue despite verification failure - just log the warning
+      await s3Client.send(new PutObjectAclCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        ACL: 'public-read'
+      }));
+      console.log(`Successfully set ACL to public-read for ${key}`);
+    } catch (aclError) {
+      console.warn(`Warning: Could not set ACL. This might affect public access:`, aclError);
     }
 
+    // Construct URL in a consistent way
+    // Using the S3 website endpoint format for better compatibility
+    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    console.log(`Generated file URL: ${fileUrl}`);
+    
     return fileUrl;
   } catch (error) {
     console.error('Error uploading to S3:', error);
     throw new Error(`Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
-
 
 
 // // Helper function to upload file to S3

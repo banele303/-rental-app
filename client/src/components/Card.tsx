@@ -1,51 +1,41 @@
-"use client";
+"use client"
 
-import type React from "react";
-import type { ImageLoaderProps } from "next/image";
-import {
-  Bath,
-  Bed,
-  Copy,
-  Edit,
-  Heart,
-  Home,
-  MapPin,
-  Star,
-  Trash2,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
+import type React from "react"
+import type { ImageLoaderProps } from "next/image"
+import { Bath, Bed, Edit, Heart, Home, MapPin, Star, Trash2 } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useState } from "react"
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
 interface PropertyCardProps {
   property: {
-    id: number;
-    name: string;
+    id: number
+    name: string
     location: {
-      address: string;
-      city: string;
-    };
-    photoUrls?: string[];
-    beds: number;
-    baths: number;
-    squareFeet: number;
-    pricePerMonth: number;
-    averageRating: number;
-    numberOfReviews: number;
-    isPetsAllowed?: boolean;
-    isParkingIncluded?: boolean;
-  };
-  isFavorite?: boolean;
-  onFavoriteToggle?: () => void;
-  showFavoriteButton?: boolean;
-  propertyLink?: string;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onDuplicate?: (id: number) => void;
+      address: string
+      city: string
+    }
+    photoUrls?: string[]
+    beds: number
+    baths: number
+    squareFeet: number
+    pricePerMonth: number
+    averageRating: number
+    numberOfReviews: number
+    isPetsAllowed?: boolean
+    isParkingIncluded?: boolean
+  }
+  isFavorite?: boolean
+  onFavoriteToggle?: () => void
+  showFavoriteButton?: boolean
+  propertyLink?: string
+  onEdit?: (id: number) => void
+  onDelete?: (id: number) => void
+  onDuplicate?: (id: number) => void
 }
 
 export default function PropertyCard({
@@ -57,36 +47,39 @@ export default function PropertyCard({
   onEdit,
   onDelete,
 }: PropertyCardProps) {
+  const [imgSrc, setImgSrc] = useState<string>(property.photoUrls?.[0] || "/placeholder.jpg")
+  const [isHovered, setIsHovered] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
-
- 
-
+  // Custom loader that just returns the URL as-is
   const loaderFunc = ({ src }: ImageLoaderProps) => {
-    return src;
-  };
+    return src
+  }
 
-  const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] || "/placeholder.jpg"
+  // Handle image error
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${imgSrc}`)
+    setImgError(true)
+    setImgSrc("/placeholder.jpg")
+  }
 
-  );
-  const [isHovered, setIsHovered] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault()
+    e.stopPropagation()
     if (onDelete) {
-      onDelete(property.id);
+      onDelete(property.id)
     }
-  };
+  }
 
   const handleEdit = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault()
+    e.stopPropagation()
     if (onEdit) {
-      onEdit(property.id);
+      onEdit(property.id)
     }
-  };
+  }
 
   return (
     <Card
@@ -95,38 +88,24 @@ export default function PropertyCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
-        <div
-          className={`"opacity-100" : "opacity-0"
-          } transition-opacity duration-500`}
-        >
-          <Image
-            src={imgSrc}
-            alt={property.name}
-            width={100}
-            height={100}
-            loader={loaderFunc}
-            priority={true}
-            placeholder="blur"
-            blurDataURL="/placeholder.jpg"
-            className={
-              "rounded-lg transition-transform duration-300 hover:scale-105"
-            }
-            onLoadingComplete={() => setIsLoaded(true)}
-            unoptimized={true}
-          />
+        <div className="relative w-full h-full">
+          {!imgError ? (
+            <Image
+              src={imgSrc || "/placeholder.svg"}
+              alt={property.name}
+              fill
+              loader={loaderFunc}
+              unoptimized={true}
+              className={`object-cover transition-transform duration-500 ${isHovered ? "scale-110" : "scale-100"}`}
+              onError={handleImageError}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-900">
+              <Home className="h-12 w-12 text-gray-600" />
+            </div>
+          )}
         </div>
-        {/* <Image
-          src={imgSrc || "/placeholder.svg"}
-          alt={property.name}
-          fill
-          className={`object-cover transition-transform duration-500 ${
-            isHovered ? "scale-110" : "scale-100"
-          }`}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={(err) => setImgSrc(`image:-----ERRR ${err} for ${imgSrc}`)}
-          // unoptimized={true} // Try this to bypass Next.js image optimization
-          loading="eager" // Instead of priority
-        /> */}
 
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-10" />
@@ -134,9 +113,7 @@ export default function PropertyCard({
         {/* Price tag */}
         <div className="absolute top-4 left-4 z-20">
           <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-md flex items-center shadow-lg border border-[#333]">
-            <span className="font-bold">
-              R{property.pricePerMonth.toFixed(0)}
-            </span>
+            <span className="font-bold">R{property.pricePerMonth.toFixed(0)}</span>
             <span className="text-xs text-white/80 ml-1">/mo</span>
           </div>
         </div>
@@ -161,11 +138,7 @@ export default function PropertyCard({
           <div className="flex items-start justify-between mb-1">
             <h2 className="line-clamp-1 text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
               {propertyLink ? (
-                <Link
-                  href={propertyLink}
-                  className="hover:text-blue-400"
-                  scroll={false}
-                >
+                <Link href={propertyLink} className="hover:text-blue-400" scroll={false}>
                   {property.name}
                 </Link>
               ) : (
@@ -174,9 +147,7 @@ export default function PropertyCard({
             </h2>
             <div className="flex items-center gap-1 bg-[#111] px-2 py-0.5 rounded-md border border-[#333]">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-medium text-white">
-                {property.averageRating.toFixed(1)}
-              </span>
+              <span className="text-xs font-medium text-white">{property.averageRating.toFixed(1)}</span>
             </div>
           </div>
 
@@ -203,9 +174,7 @@ export default function PropertyCard({
 
           <div className="flex flex-col items-center justify-center p-2 rounded-md bg-[#111] border border-[#333]">
             <Home className="h-4 w-4 mb-1 text-gray-400" />
-            <span className="font-medium text-white">
-              {property.squareFeet}
-            </span>
+            <span className="font-medium text-white">{property.squareFeet}</span>
             <span className="text-xs text-gray-400">sq ft</span>
           </div>
         </div>
@@ -250,24 +219,18 @@ export default function PropertyCard({
             size="icon"
             variant="ghost"
             className={`absolute top-4 right-4 h-9 w-9 rounded-full p-0 z-20 transition-all duration-300 ${
-              isFavorite
-                ? "bg-white text-red-500"
-                : "bg-black/70 text-white backdrop-blur-sm border border-[#333]"
+              isFavorite ? "bg-white text-red-500" : "bg-black/70 text-white backdrop-blur-sm border border-[#333]"
             }`}
             onClick={(e) => {
-              e.preventDefault();
-              onFavoriteToggle?.();
+              e.preventDefault()
+              onFavoriteToggle?.()
             }}
           >
-            <Heart
-              className={`h-5 w-5 transition-all duration-300 ${
-                isFavorite ? "fill-red-500 scale-110" : ""
-              }`}
-            />
+            <Heart className={`h-5 w-5 transition-all duration-300 ${isFavorite ? "fill-red-500 scale-110" : ""}`} />
             <span className="sr-only">Toggle favorite</span>
           </Button>
         )}
       </div>
     </Card>
-  );
+  )
 }

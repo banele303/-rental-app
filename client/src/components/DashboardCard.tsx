@@ -58,12 +58,8 @@ export default function PropertyCardDashboard({
   propertyLink,
   onDelete,
 }: PropertyCardProps) {
+  const [imgSrc, setImgSrc] = useState(property.photoUrls?.[0]);
 
-  const [imgSrc, setImgSrc] = useState(
-    property.photoUrls?.[0] 
-  );
-  
-    
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
 
@@ -100,7 +96,7 @@ export default function PropertyCardDashboard({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden">
-        <Image
+        {/* <Image
           src={imgSrc ?? "/placeholder.jpg"}
           alt={property.name}
           fill
@@ -110,8 +106,16 @@ export default function PropertyCardDashboard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           onError={(err) => setImgSrc("Image cantload")}
           priority
+        /> */}
+        <img
+          src={imgSrc}
+          alt={property.name}
+          onError={() => setImgSrc("/placeholder.jpg")}
+          className={`object-cover transition-transform duration-500 ${
+            isHovered ? "scale-110" : "scale-100"
+          }`}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-10" />
 

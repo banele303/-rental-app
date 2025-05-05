@@ -104,7 +104,7 @@ export default function PropertyCard({
     // Use a simple image path without query parameters
     setImgSrc("/placeholder.jpg");
   }}
-  unoptimized={true}
+  
 />
         {/* <Image
           src={imgSrc || "/placeholder.svg"}

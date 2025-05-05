@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { wktToGeoJSON } from "@terraformer/wkt";
-import { S3Client, ObjectCannedACL, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, ObjectCannedACL, DeleteObjectCommand, PutObjectAclCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import axios from "axios";
 
@@ -19,8 +19,7 @@ const s3Client = new S3Client({
 
 
 
-
-// Helper function to upload file to S3
+// Enhanced upload function with proper content-type handling
 async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
   // Validate S3 configuration
   if (!process.env.AWS_BUCKET_NAME) {
@@ -31,52 +30,88 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     throw new Error("AWS_REGION is not configured in environment variables");
   }
 
+  // Validate file
+  if (!file || !file.buffer) {
+    throw new Error("Invalid file data - missing file buffer");
+  }
+
+  // Create a more unique file name to prevent collisions
+  const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+  const safeFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '');
+  const key = `properties/${uniquePrefix}-${safeFileName}`;
+  
+  // Ensure proper MIME type for images
+  let contentType = file.mimetype;
+  
+  // Detect common image extensions if mimetype isn't set correctly
+  if (!contentType || contentType === 'application/octet-stream') {
+    const extension = safeFileName.split('.').pop()?.toLowerCase();
+    if (extension) {
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          contentType = 'image/jpeg';
+          break;
+        case 'png':
+          contentType = 'image/png';
+          break;
+        case 'gif':
+          contentType = 'image/gif';
+          break;
+        case 'webp':
+          contentType = 'image/webp';
+          break;
+        case 'svg':
+          contentType = 'image/svg+xml';
+          break;
+      }
+    }
+  }
+  
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `properties/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '')}`,
+    Key: key,
     Body: file.buffer,
-    ContentType: file.mimetype,
+    ContentType: contentType, // Use the corrected content type
     ACL: 'public-read' as ObjectCannedACL,
+    // Make sure object is readable by everyone
+    CacheControl: 'max-age=31536000', // Cache for a year
+    ContentDisposition: 'inline', // This is critical - forces browsers to display, not download
   };
 
   try {
+    console.log(`Starting S3 upload for file: ${params.Key}`);
+    console.log(`File mimetype: ${contentType}, size: ${file.buffer.length} bytes`);
+    
+    // Use the Upload utility for better handling of large files
     const upload = new Upload({
       client: s3Client,
       params: params,
     });
 
-    await upload.done();
+    const result = await upload.done();
     console.log(`Successfully uploaded file: ${params.Key}`);
+    
+    // Explicitly set additional headers via PutObjectAcl
+    try {
+      await s3Client.send(new PutObjectAclCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        ACL: 'public-read'
+      }));
+      console.log(`Successfully set ACL to public-read for ${key}`);
+    } catch (aclError) {
+      console.warn(`Warning: Could not set ACL. This might affect public access:`, aclError);
+    }
 
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    // Return a correctly formatted URL
+    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    console.log(`Generated file URL: ${fileUrl}`);
+    
+    return fileUrl;
   } catch (error) {
     console.error('Error uploading to S3:', error);
     throw new Error(`Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-// Helper function to delete a file from S3
-async function deleteFileFromS3(fileUrl: string): Promise<void> {
-  // Validate S3 configuration
-  if (!process.env.AWS_BUCKET_NAME) {
-    throw new Error("AWS_BUCKET_NAME is not configured in environment variables");
-  }
-
-  try {
-    // Extract the key from the URL
-    const urlPath = new URL(fileUrl).pathname;
-    const key = urlPath.startsWith('/') ? urlPath.substring(1) : urlPath;
-
-    const deleteParams = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: key,
-    };
-
-    await s3Client.send(new DeleteObjectCommand(deleteParams));
-    console.log(`Successfully deleted file: ${key}`);
-  } catch (error) {
-    console.error('Error deleting from S3:', error);
-    throw new Error(`Failed to delete file from S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -836,105 +871,7 @@ export const deleteProperty = async (
 
 
 
+function deleteFileFromS3(url: string): any {
+  throw new Error('Function not implemented.');
+}
 
-export const createProperty = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const files = req.files as Express.Multer.File[];
-    const {
-      address,
-      city,
-      state,
-      country,
-      postalCode,
-      managerCognitoId,
-      ...propertyData
-    } = req.body;
-
-    const photoUrls = await Promise.all(
-      files.map(async (file) => {
-        const uploadParams = {
-          Bucket: process.env.S3_BUCKET_NAME!,
-          Key: `properties/${Date.now()}-${file.originalname}`,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        };
-
-        const uploadResult = await new Upload({
-          client: s3Client,
-          params: uploadParams,
-        }).done();
-
-        return uploadResult.Location;
-      })
-    );
-
-    const geocodingUrl = `https://nominatim.openstreetmap.org/search?${new URLSearchParams(
-      {
-        street: address,
-        city,
-        country,
-        postalcode: postalCode,
-        format: "json",
-        limit: "1",
-      }
-    ).toString()}`;
-    const geocodingResponse = await axios.get(geocodingUrl, {
-      headers: {
-        "User-Agent": "RealEstateApp (justsomedummyemail@gmail.com",
-      },
-    });
-    const [longitude, latitude] =
-      geocodingResponse.data[0]?.lon && geocodingResponse.data[0]?.lat
-        ? [
-            parseFloat(geocodingResponse.data[0]?.lon),
-            parseFloat(geocodingResponse.data[0]?.lat),
-          ]
-        : [0, 0];
-
-    // create location
-    const [location] = await prisma.$queryRaw<{ id: number }[]>`
-      INSERT INTO "Location" (address, city, state, country, "postalCode", coordinates)
-      VALUES (${address}, ${city}, ${state}, ${country}, ${postalCode}, ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326))
-      RETURNING id, address, city, state, country, "postalCode", ST_AsText(coordinates) as coordinates;
-    `;
-
-    // create property
-    const newProperty = await prisma.property.create({
-      data: {
-        ...propertyData,
-        photoUrls,
-        locationId: location.id,
-        managerCognitoId,
-        amenities:
-          typeof propertyData.amenities === "string"
-            ? propertyData.amenities.split(",")
-            : [],
-        highlights:
-          typeof propertyData.highlights === "string"
-            ? propertyData.highlights.split(",")
-            : [],
-        isPetsAllowed: propertyData.isPetsAllowed === "true",
-        isParkingIncluded: propertyData.isParkingIncluded === "true",
-        pricePerMonth: parseFloat(propertyData.pricePerMonth),
-        securityDeposit: parseFloat(propertyData.securityDeposit),
-        applicationFee: parseFloat(propertyData.applicationFee),
-        beds: parseInt(propertyData.beds),
-        baths: parseFloat(propertyData.baths),
-        squareFeet: parseInt(propertyData.squareFeet),
-      },
-      include: {
-        location: true,
-        manager: true,
-      },
-    });
-
-    res.status(201).json(newProperty);
-  } catch (err: any) {
-    res
-      .status(500)
-      .json({ message: `Error creating property: ${err.message}` });
-  }
-};

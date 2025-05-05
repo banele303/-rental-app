@@ -93,21 +93,15 @@ export default function PropertyCard({
 
 
 
-      <Image
-  src={imgSrc}
-  alt={property.name}
-  fill
-  className={`object-cover transition-transform duration-500 ${
-    isHovered ? "scale-110" : "scale-100"
-  }`}
-  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-  onError={(err) => {
-    console.error("Image failed to load:", imgSrc, err);
-    // Use a simple image path without query parameters
-    setImgSrc("/placeholder.jpg");
-  }}
-  
-/>
+      <img
+    src={imgSrc}
+    alt={property.name}
+    onError={() => setImgSrc("/placeholder.jpg")}
+    className={`object-cover transition-transform duration-500 ${
+      isHovered ? "scale-110" : "scale-100"
+    }`}
+    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+  />
         {/* <Image
           src={imgSrc || "/placeholder.svg"}
           alt={property.name}

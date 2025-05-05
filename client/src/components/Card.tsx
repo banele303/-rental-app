@@ -58,6 +58,8 @@ export default function PropertyCard({
   onDelete,
  
 }: PropertyCardProps) {
+
+  
   const [imgSrc, setImgSrc] = useState(
     property.photoUrls?.[0] || "/placeholder.jpg"
   );
@@ -99,8 +101,8 @@ export default function PropertyCard({
     isHovered ? "scale-110" : "scale-100"
   }`}
   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-  onError={() => {
-    console.error("Image failed to load:", imgSrc);
+  onError={(err) => {
+    console.error("Image failed to load:", imgSrc, err);
     // Use a simple image path without query parameters
     setImgSrc("/placeholder.jpg");
   }}

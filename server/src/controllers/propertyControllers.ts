@@ -2,8 +2,9 @@ import "dotenv/config"
 import type { Request, Response } from "express"
 import { PrismaClient, Prisma } from "@prisma/client"
 import { wktToGeoJSON } from "@terraformer/wkt"
-import { S3Client, DeleteObjectCommand, PutObjectCommand, PutObjectAclCommand } from "@aws-sdk/client-s3"
+import { S3Client, DeleteObjectCommand, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3"
 import axios from "axios"
+import type { Express } from "express"
 
 const prisma = new PrismaClient()
 
@@ -68,14 +69,13 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     console.log(`Starting S3 upload for file: ${key}`)
     console.log(`File mimetype: ${contentType}, size: ${file.buffer.length} bytes`)
 
-    // Use PutObject directly with explicit ACL
+    // Use PutObject directly for better control
     const putCommand = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
       Body: file.buffer,
       ContentType: contentType,
       ACL: "public-read",
-      CacheControl: "max-age=31536000",
       ContentDisposition: "inline",
     })
 
@@ -83,15 +83,18 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     await s3Client.send(putCommand)
     console.log(`Successfully uploaded file: ${key}`)
 
-    // Explicitly set ACL to public-read as a separate operation to ensure it's applied
-    const aclCommand = new PutObjectAclCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: key,
-      ACL: "public-read",
-    })
-
-    await s3Client.send(aclCommand)
-    console.log(`Successfully set ACL to public-read for ${key}`)
+    // Verify the object exists and is accessible
+    try {
+      const headCommand = new HeadObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+      })
+      await s3Client.send(headCommand)
+      console.log(`Verified object exists: ${key}`)
+    } catch (verifyError) {
+      console.error(`Error verifying object: ${key}`, verifyError)
+      // Continue despite verification error
+    }
 
     // Return a correctly formatted URL
     const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
@@ -386,7 +389,7 @@ export const getProperty = async (req: Request, res: Response): Promise<void> =>
 //                   ? propertyData.amenities.split(",")
 //                   : [],
 //               highlights: Array.isArray(propertyData.highlights)
-//                 ? propertyData.highlights
+//                 ? propertyData.highlights.split(",")
 //                 : typeof propertyData.highlights === "string"
 //                   ? propertyData.highlights.split(",")
 //                   : [],

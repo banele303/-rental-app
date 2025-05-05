@@ -17,7 +17,10 @@ const s3Client = new S3Client({
   },
 });
 
-// Enhanced upload function with better error handling, double-check ACL, and consistent URL construction
+
+
+
+// Helper function to upload file to S3
 async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
   // Validate S3 configuration
   if (!process.env.AWS_BUCKET_NAME) {
@@ -28,99 +31,29 @@ async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
     throw new Error("AWS_REGION is not configured in environment variables");
   }
 
-  // Validate file
-  if (!file || !file.buffer) {
-    throw new Error("Invalid file data - missing file buffer");
-  }
-
-  // Create a more unique file name to prevent collisions
-  const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-  const safeFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '');
-  const key = `properties/${uniquePrefix}-${safeFileName}`;
-  
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
+    Key: `properties/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '')}`,
     Body: file.buffer,
     ContentType: file.mimetype,
     ACL: 'public-read' as ObjectCannedACL,
-    // Make sure object is readable by everyone
-    CacheControl: 'public, max-age=86400',
   };
 
   try {
-    console.log(`Starting S3 upload for file: ${params.Key}`);
-    console.log(`File mimetype: ${file.mimetype}, size: ${file.buffer.length} bytes`);
-    
-    // Use the Upload utility for better handling of large files
     const upload = new Upload({
       client: s3Client,
       params: params,
     });
 
-    const result = await upload.done();
+    await upload.done();
     console.log(`Successfully uploaded file: ${params.Key}`);
-    
-    // Explicitly set ACL again to ensure it's public-read
-    // This helps in some cases where the initial upload doesn't properly set the ACL
-    try {
-      await s3Client.send(new PutObjectAclCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: key,
-        ACL: 'public-read'
-      }));
-      console.log(`Successfully set ACL to public-read for ${key}`);
-    } catch (aclError) {
-      console.warn(`Warning: Could not set ACL. This might affect public access:`, aclError);
-    }
 
-    // Construct URL in a consistent way
-    // Using the S3 website endpoint format for better compatibility
-    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-    console.log(`Generated file URL: ${fileUrl}`);
-    
-    return fileUrl;
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
   } catch (error) {
     console.error('Error uploading to S3:', error);
     throw new Error(`Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
-
-
-// // Helper function to upload file to S3
-// async function uploadFileToS3(file: Express.Multer.File): Promise<string> {
-//   // Validate S3 configuration
-//   if (!process.env.AWS_BUCKET_NAME) {
-//     throw new Error("AWS_BUCKET_NAME is not configured in environment variables");
-//   }
-
-//   if (!process.env.AWS_REGION) {
-//     throw new Error("AWS_REGION is not configured in environment variables");
-//   }
-
-//   const params = {
-//     Bucket: process.env.AWS_BUCKET_NAME,
-//     Key: `properties/${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '')}`,
-//     Body: file.buffer,
-//     ContentType: file.mimetype,
-//     ACL: 'public-read' as ObjectCannedACL,
-//   };
-
-//   try {
-//     const upload = new Upload({
-//       client: s3Client,
-//       params: params,
-//     });
-
-//     await upload.done();
-//     console.log(`Successfully uploaded file: ${params.Key}`);
-
-//     return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
-//   } catch (error) {
-//     console.error('Error uploading to S3:', error);
-//     throw new Error(`Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
-//   }
-// }
 
 // Helper function to delete a file from S3
 async function deleteFileFromS3(fileUrl: string): Promise<void> {
@@ -330,200 +263,200 @@ export const getProperty = async (
   }
 };
 
-export const createProperty = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    console.log("Creating property, request body:", req.body);
+// export const createProperty = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   try {
+//     console.log("Creating property, request body:", req.body);
     
-    // Handle files safely - use an empty array if no files
-    const files = req.files as Express.Multer.File[] || [];
-    console.log(`Received ${files.length} files`);
+//     // Handle files safely - use an empty array if no files
+//     const files = req.files as Express.Multer.File[] || [];
+//     console.log(`Received ${files.length} files`);
     
-    const {
-      address,
-      city,
-      state,
-      country,
-      postalCode,
-      managerCognitoId,
-      ...propertyData
-    } = req.body;
+//     const {
+//       address,
+//       city,
+//       state,
+//       country,
+//       postalCode,
+//       managerCognitoId,
+//       ...propertyData
+//     } = req.body;
     
-    // Validate required fields - state is now optional
-    if (!address || !city || !country || !managerCognitoId) {
-      res.status(400).json({ 
-        message: "Missing required fields",
-        missingFields: {
-          address: !address,
-          city: !city,
-          country: !country,
-          postalCode: !postalCode,
-          managerCognitoId: !managerCognitoId
-        }
-      });
-      return;
-    }
+//     // Validate required fields - state is now optional
+//     if (!address || !city || !country || !managerCognitoId) {
+//       res.status(400).json({ 
+//         message: "Missing required fields",
+//         missingFields: {
+//           address: !address,
+//           city: !city,
+//           country: !country,
+//           postalCode: !postalCode,
+//           managerCognitoId: !managerCognitoId
+//         }
+//       });
+//       return;
+//     }
 
-    // Handle file uploads
-    let photoUrls: string[] = [];
-    if (files.length > 0) {
-      try {
-        // Upload files in parallel
-        photoUrls = await Promise.all(
-          files.map(file => uploadFileToS3(file))
-        );
-        console.log('Successfully uploaded photos:', photoUrls);
-      } catch (error) {
-        console.error("Error uploading files to S3:", error);
-        res.status(500).json({ 
-          message: "Error uploading files to S3",
-          error: error instanceof Error ? error.message : String(error),
-          details: "Please check your AWS S3 configuration in the environment variables"
-        });
-        return;
-      }
-    }
+//     // Handle file uploads
+//     let photoUrls: string[] = [];
+//     if (files.length > 0) {
+//       try {
+//         // Upload files in parallel
+//         photoUrls = await Promise.all(
+//           files.map(file => uploadFileToS3(file))
+//         );
+//         console.log('Successfully uploaded photos:', photoUrls);
+//       } catch (error) {
+//         console.error("Error uploading files to S3:", error);
+//         res.status(500).json({ 
+//           message: "Error uploading files to S3",
+//           error: error instanceof Error ? error.message : String(error),
+//           details: "Please check your AWS S3 configuration in the environment variables"
+//         });
+//         return;
+//       }
+//     }
 
-    // Create location first
-    try {
-      // Construct address string dynamically based on available components
-      let addressParts = [address, city];
+//     // Create location first
+//     try {
+//       // Construct address string dynamically based on available components
+//       let addressParts = [address, city];
       
-      // Add state only if it's provided and valid
-      if (state && state.trim() !== '') {
-        addressParts.push(state);
-      }
+//       // Add state only if it's provided and valid
+//       if (state && state.trim() !== '') {
+//         addressParts.push(state);
+//       }
       
-      // Add postal code if available
-      if (postalCode && postalCode.trim() !== '') {
-        addressParts.push(postalCode);
-      }
+//       // Add postal code if available
+//       if (postalCode && postalCode.trim() !== '') {
+//         addressParts.push(postalCode);
+//       }
       
-      // Always add country
-      addressParts.push(country);
+//       // Always add country
+//       addressParts.push(country);
       
-      // Join parts into a single string
-      const addressString = addressParts.join(', ');
+//       // Join parts into a single string
+//       const addressString = addressParts.join(', ');
       
-      // Get coordinates from address using Google Maps Geocoding API
-      const geocodingResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-          addressString
-        )}&key=${process.env.GOOGLE_MAPS_API_KEY}`
-      );
+//       // Get coordinates from address using Google Maps Geocoding API
+//       const geocodingResponse = await axios.get(
+//         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+//           addressString
+//         )}&key=${process.env.GOOGLE_MAPS_API_KEY}`
+//       );
 
-      if (
-        geocodingResponse.data.status === "OK" &&
-        geocodingResponse.data.results[0]
-      ) {
-        const { lat, lng } = geocodingResponse.data.results[0].geometry.location;
+//       if (
+//         geocodingResponse.data.status === "OK" &&
+//         geocodingResponse.data.results[0]
+//       ) {
+//         const { lat, lng } = geocodingResponse.data.results[0].geometry.location;
         
-        // Create location using raw query
-        const locationResult = await prisma.$queryRaw<{ id: number }[]>`
-          INSERT INTO "Location" ("address", "city", "state", "country", "postalCode", "coordinates")
-          VALUES (
-            ${address},
-            ${city},
-            ${state || 'N/A'},  -- Provide a default value if state is null
-            ${country},
-            ${postalCode || null},
-            ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
-          )
-          RETURNING id
-        `;
+//         // Create location using raw query
+//         const locationResult = await prisma.$queryRaw<{ id: number }[]>`
+//           INSERT INTO "Location" ("address", "city", "state", "country", "postalCode", "coordinates")
+//           VALUES (
+//             ${address},
+//             ${city},
+//             ${state || 'N/A'},  -- Provide a default value if state is null
+//             ${country},
+//             ${postalCode || null},
+//             ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
+//           )
+//           RETURNING id
+//         `;
         
-        if (!locationResult || locationResult.length === 0) {
-          throw new Error("Failed to create location");
-        }
+//         if (!locationResult || locationResult.length === 0) {
+//           throw new Error("Failed to create location");
+//         }
         
-        const locationId = locationResult[0].id;
+//         const locationId = locationResult[0].id;
 
-        // Parse property data safely
-        try {
-          // Create property with proper type handling
-          const newProperty = await prisma.property.create({
-            data: {
-              ...propertyData,
-              photoUrls,
-              locationId: locationId,
-              managerCognitoId,
-              // Parse array fields
-              amenities: Array.isArray(propertyData.amenities) 
-                ? propertyData.amenities 
-                : typeof propertyData.amenities === "string"
-                  ? propertyData.amenities.split(",")
-                  : [],
-              highlights: Array.isArray(propertyData.highlights)
-                ? propertyData.highlights
-                : typeof propertyData.highlights === "string"
-                  ? propertyData.highlights.split(",")
-                  : [],
-              // Parse boolean fields
-              isPetsAllowed: propertyData.isPetsAllowed === "true",
-              isParkingIncluded: propertyData.isParkingIncluded === "true",
-              // Parse numeric fields
-              pricePerMonth: parseFloat(propertyData.pricePerMonth) || 0,
-              securityDeposit: parseFloat(propertyData.securityDeposit) || 0,
-              applicationFee: parseFloat(propertyData.applicationFee) || 0,
-              beds: parseInt(propertyData.beds) || 1,
-              baths: parseFloat(propertyData.baths) || 1,
-              squareFeet: parseInt(propertyData.squareFeet) || 0,
-            },
-            include: {
-              location: true,
-              manager: true,
-            },
-          });
+//         // Parse property data safely
+//         try {
+//           // Create property with proper type handling
+//           const newProperty = await prisma.property.create({
+//             data: {
+//               ...propertyData,
+//               photoUrls,
+//               locationId: locationId,
+//               managerCognitoId,
+//               // Parse array fields
+//               amenities: Array.isArray(propertyData.amenities) 
+//                 ? propertyData.amenities 
+//                 : typeof propertyData.amenities === "string"
+//                   ? propertyData.amenities.split(",")
+//                   : [],
+//               highlights: Array.isArray(propertyData.highlights)
+//                 ? propertyData.highlights
+//                 : typeof propertyData.highlights === "string"
+//                   ? propertyData.highlights.split(",")
+//                   : [],
+//               // Parse boolean fields
+//               isPetsAllowed: propertyData.isPetsAllowed === "true",
+//               isParkingIncluded: propertyData.isParkingIncluded === "true",
+//               // Parse numeric fields
+//               pricePerMonth: parseFloat(propertyData.pricePerMonth) || 0,
+//               securityDeposit: parseFloat(propertyData.securityDeposit) || 0,
+//               applicationFee: parseFloat(propertyData.applicationFee) || 0,
+//               beds: parseInt(propertyData.beds) || 1,
+//               baths: parseFloat(propertyData.baths) || 1,
+//               squareFeet: parseInt(propertyData.squareFeet) || 0,
+//             },
+//             include: {
+//               location: true,
+//               manager: true,
+//             },
+//           });
 
-          // Fetch the updated location to get coordinates
-          const updatedLocation = await prisma.$queryRaw<{ x: number, y: number }[]>`
-            SELECT 
-              ST_X(coordinates::geometry) as x,
-              ST_Y(coordinates::geometry) as y
-            FROM "Location"
-            WHERE id = ${locationId}
-          `;
+//           // Fetch the updated location to get coordinates
+//           const updatedLocation = await prisma.$queryRaw<{ x: number, y: number }[]>`
+//             SELECT 
+//               ST_X(coordinates::geometry) as x,
+//               ST_Y(coordinates::geometry) as y
+//             FROM "Location"
+//             WHERE id = ${locationId}
+//           `;
 
-          // Add coordinates to the response
-          const propertyWithCoordinates = {
-            ...newProperty,
-            location: {
-              ...newProperty.location,
-              coordinates: {
-                latitude: updatedLocation[0]?.y || lat,
-                longitude: updatedLocation[0]?.x || lng,
-              },
-            },
-          };
+//           // Add coordinates to the response
+//           const propertyWithCoordinates = {
+//             ...newProperty,
+//             location: {
+//               ...newProperty.location,
+//               coordinates: {
+//                 latitude: updatedLocation[0]?.y || lat,
+//                 longitude: updatedLocation[0]?.x || lng,
+//               },
+//             },
+//           };
 
-          console.log("Property created successfully:", propertyWithCoordinates);
-          res.status(201).json(propertyWithCoordinates);
-        } catch (propertyError: any) {
-          console.error("Error creating property:", propertyError);
-          res.status(500).json({ 
-            message: `Error creating property: ${propertyError.message}`,
-            details: propertyError
-          });
-        }
-      } else {
-        throw new Error("Could not geocode the address");
-      }
-    } catch (locationError: any) {
-      console.error("Error creating location:", locationError);
-      res.status(500).json({ 
-        message: `Error creating location: ${locationError.message}`,
-        details: locationError
-      });
-    }
-  } catch (err: any) {
-    console.error("Unhandled error in createProperty:", err);
-    res
-      .status(500)
-      .json({ message: `Error creating property: ${err.message}` });
-  }
-};
+//           console.log("Property created successfully:", propertyWithCoordinates);
+//           res.status(201).json(propertyWithCoordinates);
+//         } catch (propertyError: any) {
+//           console.error("Error creating property:", propertyError);
+//           res.status(500).json({ 
+//             message: `Error creating property: ${propertyError.message}`,
+//             details: propertyError
+//           });
+//         }
+//       } else {
+//         throw new Error("Could not geocode the address");
+//       }
+//     } catch (locationError: any) {
+//       console.error("Error creating location:", locationError);
+//       res.status(500).json({ 
+//         message: `Error creating location: ${locationError.message}`,
+//         details: locationError
+//       });
+//     }
+//   } catch (err: any) {
+//     console.error("Unhandled error in createProperty:", err);
+//     res
+//       .status(500)
+//       .json({ message: `Error creating property: ${err.message}` });
+//   }
+// };
 
 // New function to update a property
 export const updateProperty = async (
@@ -883,5 +816,125 @@ export const deleteProperty = async (
       message: `Error deleting property: ${err.message}`,
       error: err
     });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const createProperty = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    const {
+      address,
+      city,
+      state,
+      country,
+      postalCode,
+      managerCognitoId,
+      ...propertyData
+    } = req.body;
+
+    const photoUrls = await Promise.all(
+      files.map(async (file) => {
+        const uploadParams = {
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: `properties/${Date.now()}-${file.originalname}`,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        };
+
+        const uploadResult = await new Upload({
+          client: s3Client,
+          params: uploadParams,
+        }).done();
+
+        return uploadResult.Location;
+      })
+    );
+
+    const geocodingUrl = `https://nominatim.openstreetmap.org/search?${new URLSearchParams(
+      {
+        street: address,
+        city,
+        country,
+        postalcode: postalCode,
+        format: "json",
+        limit: "1",
+      }
+    ).toString()}`;
+    const geocodingResponse = await axios.get(geocodingUrl, {
+      headers: {
+        "User-Agent": "RealEstateApp (justsomedummyemail@gmail.com",
+      },
+    });
+    const [longitude, latitude] =
+      geocodingResponse.data[0]?.lon && geocodingResponse.data[0]?.lat
+        ? [
+            parseFloat(geocodingResponse.data[0]?.lon),
+            parseFloat(geocodingResponse.data[0]?.lat),
+          ]
+        : [0, 0];
+
+    // create location
+    const [location] = await prisma.$queryRaw<{ id: number }[]>`
+      INSERT INTO "Location" (address, city, state, country, "postalCode", coordinates)
+      VALUES (${address}, ${city}, ${state}, ${country}, ${postalCode}, ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326))
+      RETURNING id, address, city, state, country, "postalCode", ST_AsText(coordinates) as coordinates;
+    `;
+
+    // create property
+    const newProperty = await prisma.property.create({
+      data: {
+        ...propertyData,
+        photoUrls,
+        locationId: location.id,
+        managerCognitoId,
+        amenities:
+          typeof propertyData.amenities === "string"
+            ? propertyData.amenities.split(",")
+            : [],
+        highlights:
+          typeof propertyData.highlights === "string"
+            ? propertyData.highlights.split(",")
+            : [],
+        isPetsAllowed: propertyData.isPetsAllowed === "true",
+        isParkingIncluded: propertyData.isParkingIncluded === "true",
+        pricePerMonth: parseFloat(propertyData.pricePerMonth),
+        securityDeposit: parseFloat(propertyData.securityDeposit),
+        applicationFee: parseFloat(propertyData.applicationFee),
+        beds: parseInt(propertyData.beds),
+        baths: parseFloat(propertyData.baths),
+        squareFeet: parseInt(propertyData.squareFeet),
+      },
+      include: {
+        location: true,
+        manager: true,
+      },
+    });
+
+    res.status(201).json(newProperty);
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: `Error creating property: ${err.message}` });
   }
 };

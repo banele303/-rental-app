@@ -28,7 +28,7 @@ const TenantSettings = () => {
 
   return (
 
-    <div className="flex justify-center md:mx-w-10xl">
+    <div className="flex bg-[#0F1112] justify-center md:mx-w-10xl">
  <SettingsForm
       initialData={initialData}
       onSubmit={handleSubmit}

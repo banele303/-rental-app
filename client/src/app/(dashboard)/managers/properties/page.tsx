@@ -120,8 +120,8 @@ const Properties = () => {
             subtitle="View and manage your property listings"
           />
           <Button 
-            onClick={() => router.push("/managers/properties/create")}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => router.push("/managers/newproperty")}
+            className="bg-blue-700 hover:bg-blue-700 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Property

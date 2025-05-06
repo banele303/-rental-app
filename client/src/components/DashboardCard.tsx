@@ -91,7 +91,7 @@ export default function PropertyCardDashboard({
 
   return (
     <Card
-      className="group overflow-hidden transition-all duration-300 hover:shadow-xl border border-[#333] bg-black rounded-xl relative"
+      className="group overflow-hidden transition-all duration-300 hover:shadow-xl border border-[#333] bg-[#0F1112] rounded-xl relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -109,11 +109,11 @@ export default function PropertyCardDashboard({
         />
         
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0F1112] via-transparent to-[#0F1112]/40 z-10" />
 
         {/* Price tag */}
         <div className="absolute top-4 left-4 z-20">
-          <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-md flex items-center shadow-lg border border-[#333]">
+          <div className="bg-[#0F1112] backdrop-blur-md text-white px-3 py-1.5 rounded-md flex items-center shadow-lg border border-[#333]">
             <span className="font-bold">
               R{property.pricePerMonth.toFixed(0)}
             </span>

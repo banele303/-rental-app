@@ -32,7 +32,7 @@ interface PropertyCardCompactProps {
   propertyLink?: string
 }
 
-export default function PropertyCardCompact({
+export default function DashboardCardCompact({
   property,
   isFavorite = false,
   onFavoriteToggle,

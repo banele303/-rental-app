@@ -37,7 +37,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     return (
       <>
        
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+        <div className="fixed inset-0 bg-[#0F1112] z-[100] flex items-center justify-center">
           <div className="w-12 h-12 rounded-full border-4 border-primary-800/20 border-t-primary-800 animate-spin"></div>
         </div>
       </>
@@ -46,7 +46,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full ">
+      <div className="min-h-screen w-full bg-[bg-[#1A1C1E] ">
         <Navbar />
         <div style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <div className="flex">

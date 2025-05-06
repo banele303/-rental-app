@@ -30,7 +30,7 @@ const SettingsForm = ({
   };
 
   return (
-    <div className="py-8 px-4 md:px-6 lg:px-8 max-w-4xl mx-auto">
+    <div className="py-8 px-4 md:px-6 lg:px-8  max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           {`${userType.charAt(0).toUpperCase() + userType.slice(1)} Settings`}
@@ -40,7 +40,7 @@ const SettingsForm = ({
         </p>
       </div>
 
-      <div className="bg-black/40 rounded-xl border border-gray-800 shadow-lg backdrop-blur-sm">
+      <div className="bg-[#1A1C1E] rounded-xl border border-gray-800 shadow-lg backdrop-blur-sm">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}

@@ -1,26 +1,26 @@
 "use client";
 
+import type React from "react";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import Image from 'next/image';
+import { toast, Toaster } from "sonner";
+import Image from "next/image";
 // Components
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
+import { CreateFormField } from "@/components/CreateFormField";
 import { CustomFormField } from "@/components/FormField";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
 import {
   Building,
-  DollarSign,
   Home,
   MapPin,
-  // Image,
   Check,
   ChevronDown,
   ChevronUp,
@@ -30,10 +30,12 @@ import {
   Loader2,
   ArrowLeft,
   ImageDown,
+  X,
+  CircleDollarSign,
 } from "lucide-react";
 
 // Data & API
-import { PropertyFormData, propertySchema } from "@/lib/schemas";
+import { type PropertyFormData, propertySchema } from "@/lib/schemas";
 import { useCreatePropertyMutation, useGetAuthUserQuery } from "@/state/api";
 import { AmenityEnum, HighlightEnum, PropertyTypeEnum } from "@/lib/constants";
 
@@ -45,17 +47,22 @@ interface FormSectionProps {
   defaultOpen?: boolean;
 }
 
-const FormSection = ({ title, icon, children, defaultOpen = false }: FormSectionProps) => {
+const FormSection = ({
+  title,
+  icon,
+  children,
+  defaultOpen = false,
+}: FormSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden mb-6 shadow-lg">
+    <div className="bg-[#0B1120]/80 border border-[#1E2A45] rounded-lg overflow-hidden mb-6 shadow-lg">
       <div
         className="flex items-center justify-between p-4 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-900/30 rounded-lg text-blue-400">
+          <div className="p-2 bg-[#1E2A45] rounded-lg text-[#4F9CF9]">
             {icon}
           </div>
           <h2 className="text-lg font-semibold text-white">{title}</h2>
@@ -64,7 +71,7 @@ const FormSection = ({ title, icon, children, defaultOpen = false }: FormSection
           {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </div>
       </div>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -74,7 +81,7 @@ const FormSection = ({ title, icon, children, defaultOpen = false }: FormSection
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="p-4 border-t border-gray-800 bg-gray-900/30">
+            <div className="p-4 border-t border-[#1E2A45] bg-[#0B1120]/60">
               {children}
             </div>
           </motion.div>
@@ -125,6 +132,24 @@ const NewProperty = () => {
     }
   };
 
+  // Handle removing an amenity
+  const handleRemoveAmenity = (amenityToRemove: string) => {
+    const currentAmenities = form.getValues("amenities") || [];
+    const updatedAmenities = currentAmenities.filter(
+      (amenity) => amenity !== amenityToRemove
+    );
+    form.setValue("amenities", updatedAmenities);
+  };
+
+  // Handle removing a highlight
+  const handleRemoveHighlight = (highlightToRemove: string) => {
+    const currentHighlights = form.getValues("highlights") || [];
+    const updatedHighlights = currentHighlights.filter(
+      (highlight) => highlight !== highlightToRemove
+    );
+    form.setValue("highlights", updatedHighlights);
+  };
+
   const onSubmit = async (data: PropertyFormData) => {
     if (submitting) return;
 
@@ -132,7 +157,10 @@ const NewProperty = () => {
       setSubmitting(true);
 
       if (!authUser?.cognitoInfo?.userId) {
-        toast.error("You must be logged in to create a property");
+        toast.error("You must be logged in to create a property", {
+          className: "bg-red-500 text-white",
+          duration: 4000,
+        });
         return;
       }
 
@@ -167,7 +195,11 @@ const NewProperty = () => {
       await createProperty(formData).unwrap();
 
       // Show success message
-      toast.success("Property created successfully!");
+      toast.success("Property created successfully!", {
+        className: "bg-[#0070F3] text-white font-medium",
+        position: "top-center",
+        duration: 4000,
+      });
 
       // Reset form on success
       form.reset();
@@ -175,11 +207,15 @@ const NewProperty = () => {
 
       // Redirect to properties page
       router.push("/managers/properties");
-      
     } catch (error: any) {
       console.error("Error creating property:", error);
       toast.error(
-        error?.data?.message || "Failed to create property. Please try again."
+        error?.data?.message || "Failed to create property. Please try again.",
+        {
+          className: "bg-red-500 text-white",
+          position: "top-center",
+          duration: 4000,
+        }
       );
     } finally {
       setSubmitting(false);
@@ -188,26 +224,30 @@ const NewProperty = () => {
 
   // Style for form field labels
   const labelStyle = "text-sm font-medium text-gray-200";
-  
+
   // Style for form field inputs
-  const inputStyle = "bg-gray-800 text-white border-gray-700 focus:border-blue-500 focus:ring-blue-500 rounded-md";
+  const inputStyle =
+    "bg-[#0B1120] text-white border-[#1E2A45] focus:border-[#4F9CF9] focus:ring-[#4F9CF9] rounded-md";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0B1120] to-[#0F172A] text-white">
+      <Toaster richColors position="top-center" />
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header with back button */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-gray-400 hover:text-white bg-gray-900/50 hover:bg-gray-800 rounded-full"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-400 hover:text-white bg-[#0B1120]/80 hover:bg-[#1E2A45] rounded-full"
               onClick={() => router.back()}
             >
               <ArrowLeft size={20} />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-white">Add New Property</h1>
+              <h1 className="text-3xl font-bold text-white">
+                Add New Property
+              </h1>
               <p className="text-gray-400 mt-1">
                 Create a new property listing with detailed information
               </p>
@@ -220,21 +260,21 @@ const NewProperty = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Basic Information */}
-              <FormSection 
-                title="Basic Information" 
+              <FormSection
+                title="Basic Information"
                 icon={<Building size={20} />}
                 defaultOpen={true}
               >
                 <div className="space-y-4">
-                  <CustomFormField 
-                    name="name" 
-                    label="Property Name" 
+                  <CreateFormField
+                    name="name"
+                    label="Property Name"
                     labelClassName={labelStyle}
                     inputClassName={inputStyle}
                     placeholder="Enter property name"
                   />
-                  
-                  <CustomFormField
+
+                  <CreateFormField
                     name="description"
                     label="Description"
                     type="textarea"
@@ -242,8 +282,8 @@ const NewProperty = () => {
                     inputClassName={`${inputStyle} min-h-[100px] resize-y`}
                     placeholder="Describe your property..."
                   />
-                  
-                  <CustomFormField
+
+                  <CreateFormField
                     name="propertyType"
                     label="Property Type"
                     type="select"
@@ -258,9 +298,9 @@ const NewProperty = () => {
               </FormSection>
 
               {/* Fees */}
-              <FormSection 
-                title="Pricing & Fees" 
-                icon={<DollarSign size={20} />}
+              <FormSection
+                title="Pricing & Fees"
+                icon={<CircleDollarSign size={20} />}
               >
                 <div className="space-y-6">
                   <div className="relative">
@@ -272,9 +312,11 @@ const NewProperty = () => {
                       inputClassName={`${inputStyle} pl-7`}
                       min={0}
                     />
-                    <span className="absolute top-9 left-3 text-gray-400">$</span>
+                    <span className="absolute top-9 left-3 text-gray-400">
+                      R
+                    </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
                       <CustomFormField
@@ -285,9 +327,11 @@ const NewProperty = () => {
                         inputClassName={`${inputStyle} pl-7`}
                         min={0}
                       />
-                      <span className="absolute top-9 left-3 text-gray-400">$</span>
+                      <span className="absolute top-9 left-3 text-gray-400">
+                        R
+                      </span>
                     </div>
-                    
+
                     <div className="relative">
                       <CustomFormField
                         name="applicationFee"
@@ -297,20 +341,21 @@ const NewProperty = () => {
                         inputClassName={`${inputStyle} pl-7`}
                         min={0}
                       />
-                      <span className="absolute top-9 left-3 text-gray-400">$</span>
+                      <span className="absolute top-9 left-3 text-gray-400">
+                        R
+                      </span>
                     </div>
                   </div>
                 </div>
               </FormSection>
 
+              
+
               {/* Property Details */}
-              <FormSection 
-                title="Property Details" 
-                icon={<Home size={20} />}
-              >
+              <FormSection title="Property Details" icon={<Home size={20} />}>
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <CustomFormField
+                    <CreateFormField
                       name="beds"
                       label="Bedrooms"
                       type="number"
@@ -318,8 +363,8 @@ const NewProperty = () => {
                       inputClassName={inputStyle}
                       min={0}
                     />
-                    
-                    <CustomFormField
+
+                    <CreateFormField
                       name="baths"
                       label="Bathrooms"
                       type="number"
@@ -327,8 +372,8 @@ const NewProperty = () => {
                       inputClassName={inputStyle}
                       min={0}
                     />
-                    
-                    <CustomFormField
+
+                    <CreateFormField
                       name="squareFeet"
                       label="Square Feet"
                       type="number"
@@ -337,16 +382,16 @@ const NewProperty = () => {
                       min={0}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <CustomFormField
+                    <CreateFormField
                       name="isPetsAllowed"
                       label="Pets Allowed"
                       type="switch"
                       labelClassName={labelStyle}
                     />
-                    
-                    <CustomFormField
+
+                    <CreateFormField
                       name="isParkingIncluded"
                       label="Parking Included"
                       type="switch"
@@ -357,13 +402,13 @@ const NewProperty = () => {
               </FormSection>
 
               {/* Amenities and Highlights */}
-              <FormSection 
-                title="Amenities & Highlights" 
+              <FormSection
+                title="Amenities & Highlights"
                 icon={<Sparkles size={20} />}
               >
                 <div className="space-y-6">
                   <div>
-                    <CustomFormField
+                    <CreateFormField
                       name="amenities"
                       label="Amenities"
                       type="multi-select"
@@ -372,20 +417,30 @@ const NewProperty = () => {
                         label: amenity,
                       }))}
                       labelClassName={labelStyle}
-                      inputClassName={inputStyle}
+                      inputClassName={`${inputStyle} bg-[#0B1120] !text-white`}
                     />
                     <div className="mt-2 flex flex-wrap gap-2">
                       {form.watch("amenities")?.map((amenity, idx) => (
-                        <Badge key={idx} className="bg-blue-900/30 text-blue-400 border-blue-800 px-2 py-1">
-                          <Coffee className="w-3 h-3 mr-1" />
+                        <Badge
+                          key={idx}
+                          className="bg-[#1E3A8A]/30 text-[#60A5FA] border-[#1E3A8A] px-3 py-1.5 flex items-center gap-1.5"
+                        >
+                          <Coffee className="w-3 h-3" />
                           {amenity}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAmenity(amenity)}
+                            className="ml-1 hover:bg-[#1E3A8A] rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </Badge>
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
-                    <CustomFormField
+                    <CreateFormField
                       name="highlights"
                       label="Highlights"
                       type="multi-select"
@@ -394,13 +449,23 @@ const NewProperty = () => {
                         label: highlight,
                       }))}
                       labelClassName={labelStyle}
-                      inputClassName={inputStyle}
+                      inputClassName={`${inputStyle} bg-[#0B1120] !text-white`}
                     />
                     <div className="mt-2 flex flex-wrap gap-2">
                       {form.watch("highlights")?.map((highlight, idx) => (
-                        <Badge key={idx} className="bg-purple-900/30 text-purple-400 border-purple-800 px-2 py-1">
-                          <Check className="w-3 h-3 mr-1" />
+                        <Badge
+                          key={idx}
+                          className="bg-[#5B21B6]/30 text-[#A78BFA] border-[#5B21B6] px-3 py-1.5 flex items-center gap-1.5"
+                        >
+                          <Check className="w-3 h-3" />
                           {highlight}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveHighlight(highlight)}
+                            className="ml-1 hover:bg-[#5B21B6] rounded-full p-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </Badge>
                       ))}
                     </div>
@@ -409,8 +474,8 @@ const NewProperty = () => {
               </FormSection>
 
               {/* Photos */}
-              <FormSection 
-                title="Property Photos" 
+              <FormSection
+                title="Property Photos"
                 icon={<ImageDown size={20} />}
               >
                 <div>
@@ -425,24 +490,27 @@ const NewProperty = () => {
                     onChange={handleFileChange}
                     render={({ field }) => (
                       <div className="mt-2">
-                        <label 
-                          htmlFor={field.name} 
-                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                        <label
+                          htmlFor={field.name}
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#1E2A45] rounded-lg cursor-pointer bg-[#0B1120]/50 hover:bg-[#0B1120] transition-colors"
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                            <Upload className="w-8 h-8 mb-3 text-[#4F9CF9]" />
                             <p className="mb-2 text-sm text-gray-400">
-                              <span className="font-semibold">Click to upload</span> or drag and drop
+                              <span className="font-semibold">
+                                Click to upload
+                              </span>{" "}
+                              or drag and drop
                             </p>
                             <p className="text-xs text-gray-500">
                               PNG, JPG, GIF up to 10MB
                             </p>
                           </div>
-                          <input 
-                            id={field.name} 
-                            type="file" 
-                            className="hidden" 
-                            multiple 
+                          <input
+                            id={field.name}
+                            type="file"
+                            className="hidden"
+                            multiple
                             accept="image/*"
                             onChange={(e) => {
                               field.onChange(e.target.files);
@@ -453,27 +521,28 @@ const NewProperty = () => {
                       </div>
                     )}
                   />
-                  
+
                   {/* File preview */}
                   {uploadedFiles.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-sm text-gray-400 mb-2">Selected files ({uploadedFiles.length}):</p>
+                      <p className="text-sm text-gray-400 mb-2">
+                        Selected files ({uploadedFiles.length}):
+                      </p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {uploadedFiles.map((file, index) => (
-                          <div key={index} className="relative bg-gray-800 rounded-md p-1 h-20 flex items-center justify-center overflow-hidden">
-                            {/* <img 
-                              src={URL.createObjectURL(file)} 
-                              alt={`Preview ${index}`} 
-                              className="h-full w-full object-cover rounded"
-                            /> */}
-
-<Image
-  src={URL.createObjectURL(file)}
-  alt={`Preview ${index}`}
-  width={300}
-  height={200}
-  className="w-full h-32 object-cover rounded-lg"
-/>
+                          <div
+                            key={index}
+                            className="relative bg-[#0B1120] rounded-md p-1 h-20 flex items-center justify-center overflow-hidden"
+                          >
+                            <Image
+                              src={
+                                URL.createObjectURL(file) || "/placeholder.svg"
+                              }
+                              alt={`Preview ${index}`}
+                              width={300}
+                              height={200}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
                           </div>
                         ))}
                       </div>
@@ -483,54 +552,54 @@ const NewProperty = () => {
               </FormSection>
 
               {/* Location */}
-              <FormSection 
-                title="Location Information" 
+              <FormSection
+                title="Location Information"
                 icon={<MapPin size={20} />}
               >
                 <div className="space-y-4">
-                  <CustomFormField 
-                    name="address" 
-                    label="Street Address" 
+                  <CreateFormField
+                    name="address"
+                    label="Street Address"
                     labelClassName={labelStyle}
                     inputClassName={inputStyle}
                     placeholder="123 Main St, Apt 4B"
                   />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <CustomFormField 
-                      name="city" 
-                      label="City" 
-                      className="w-full" 
+                    <CreateFormField
+                      name="city"
+                      label="City"
+                      className="w-full"
                       labelClassName={labelStyle}
                       inputClassName={inputStyle}
-                      placeholder="New York"
+                      placeholder="Cape Town"
                     />
-                    
-                    <CustomFormField
+
+                    <CreateFormField
                       name="state"
                       label="State/Province"
                       className="w-full"
                       labelClassName={labelStyle}
                       inputClassName={inputStyle}
-                      placeholder="NY"
+                      placeholder="Western Cape"
                     />
-                    
-                    <CustomFormField
+
+                    <CreateFormField
                       name="postalCode"
                       label="Postal Code"
                       className="w-full"
                       labelClassName={labelStyle}
                       inputClassName={inputStyle}
-                      placeholder="10001"
+                      placeholder="8001"
                     />
                   </div>
-                  
-                  <CustomFormField 
-                    name="country" 
-                    label="Country" 
+
+                  <CreateFormField
+                    name="country"
+                    label="Country"
                     labelClassName={labelStyle}
                     inputClassName={inputStyle}
-                    placeholder="United States"
+                    placeholder="South Africa"
                   />
                 </div>
               </FormSection>
@@ -539,7 +608,7 @@ const NewProperty = () => {
               <div className="sticky bottom-4 w-full pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg shadow-lg transition-colors"
+                  className="w-full bg-gradient-to-r from-[#0070F3] to-[#4F9CF9] hover:from-[#0060D3] hover:to-[#3F8CE9] text-white font-medium py-3 rounded-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                   disabled={isLoading || submitting}
                 >
                   {submitting ? (
@@ -559,7 +628,6 @@ const NewProperty = () => {
           </Form>
         </div>
       </div>
-      <Toaster position="top-center" />
     </div>
   );
 };

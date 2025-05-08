@@ -238,16 +238,19 @@ const Residence = () => {
   const { data: leases, isLoading: leasesLoading } = useGetLeasesQuery(undefined, {
     skip: !authUser?.cognitoInfo?.userId,
   });
-  const { data: payments, isLoading: paymentsLoading } = useGetPaymentsQuery(leases?.[0]?.id || 0, {
-    skip: !leases?.[0]?.id
+  
+  // First find the current lease for this property
+  const currentLease = leases?.find(
+    (lease: Lease) => lease.propertyId === property.id
+  );
+  
+  // Then fetch payments based on the current lease
+  const { data: payments, isLoading: paymentsLoading } = useGetPaymentsQuery(currentLease?.id || 0, {
+    skip: !currentLease?.id
   });
 
   if (propertyLoading || leasesLoading || paymentsLoading) return <Loading />;
   if (!property || propertyError) return <div>Error loading property</div>;
-
-  const currentLease = leases?.find(
-    (lease) => lease.propertyId === property.id
-  );
 
   return (
     <div className="dashboard-container">

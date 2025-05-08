@@ -36,6 +36,7 @@ type CacheTagType = "Applications" | "Managers" | "Tenants" | "Properties" | "Pr
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
+    timeout: 60000, // Increase timeout to 60 seconds
     prepareHeaders: async (headers) => {
       try {
         const session = await fetchAuthSession();
@@ -59,12 +60,26 @@ export const api = createApi({
       }
       return response.status >= 200 && response.status < 300;
     },
-    // Add custom response handling
+    // Add custom response handling with retry logic
     async fetchFn(input, init) {
-      const response = await fetch(input, init);
+      const maxRetries = 3;
+      let retries = 0;
+      let lastError;
       
-      // Clone the response before reading it
-      const clonedResponse = response.clone();
+      while (retries < maxRetries) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          
+          const response = await fetch(input, {
+            ...init,
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Clone the response before reading it
+          const clonedResponse = response.clone();
       
       try {
         // Try to parse as JSON first
@@ -94,6 +109,25 @@ export const api = createApi({
           originalStatus: response.status
         };
       }
+        } catch (error) {
+          lastError = error;
+          retries++;
+          console.log(`API request failed, retry attempt ${retries}/${maxRetries}`);
+          
+          if (retries >= maxRetries) {
+            console.error('Max retries reached, throwing last error:', error);
+            throw error;
+          }
+          
+          // Exponential backoff: 1s, 2s, 4s, etc.
+          const delay = Math.min(1000 * Math.pow(2, retries - 1), 10000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+      
+      // This should never be reached due to the throw in the loop, but TypeScript needs it
+      throw lastError;
+    }
     }
   }),
   reducerPath: "api",
@@ -147,8 +181,10 @@ export const api = createApi({
             status: (userDetailsResponse.error as any)?.status
           });
 
-          // if user doesn't exist, create new user
-          if (userDetailsResponse.error && (userDetailsResponse.error as any).status === 404) {
+          // if user doesn't exist or there's a timeout, create new user
+          if (userDetailsResponse.error && 
+              ((userDetailsResponse.error as any).status === 404 || 
+               (userDetailsResponse.error as any).status === 504)) {
             console.log("User not found, attempting to create new user");
             userDetailsResponse = await createNewUserInDatabase(cognitoUser, idToken, userRole, fetchWithBQ);
             console.log("New user creation response:", {
@@ -182,7 +218,7 @@ export const api = createApi({
                 code: error?.code || 'No error code',
                 type: error?.constructor?.name || 'Unknown error type',
                 isError: error instanceof Error,
-                stringified: JSON.stringify(error, null, 2)
+                stringified: typeof error === 'object' ? JSON.stringify(error, Object.getOwnPropertyNames(error), 2) : String(error)
             };
             
             console.error("Error in getAuthUser queryFn:", errorDetails);
@@ -192,8 +228,16 @@ export const api = createApi({
                                error?.data?.message || 
                                (error?.status === 401 ? "Authentication failed" : 
                                 error?.status === 404 ? "User not found" :
+                                error?.status === 504 ? "Server timeout - please try again" :
                                 "Could not fetch user data");
                                
+            // If this is a timeout error, we can return a fallback user state
+            if (error?.status === 504) {
+              console.log("Timeout error, returning fallback user state");
+              // You could return a cached user here if available
+              // For now, we'll just return the error
+            }
+            
             return { 
                 error: { 
                     status: error?.status || 'CUSTOM_ERROR', 

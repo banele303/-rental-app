@@ -67,7 +67,7 @@ const Map = () => {
       });
 
       const resizeMap = () => {
-        if (mapInstance) setTimeout(() => mapInstance.resize(), 700);
+        if (mapInstance) setTimeout(() => mapInstance?.resize(), 700);
       };
       resizeMap();
       

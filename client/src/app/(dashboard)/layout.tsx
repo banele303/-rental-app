@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import Sidebar from "@/components/AppSidebar";
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import React, { useEffect, useState } from "react";
@@ -46,20 +46,40 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-[bg-[#1A1C1E] ">
+      <DashboardContent userRole={authUser.userRole.toLowerCase() as "tenant" | "manager"}>
+        {children}
+      </DashboardContent>
+    </SidebarProvider>
+  );
+};
+
+// Separate component to use the sidebar context
+const DashboardContent = ({ userRole, children }: { userRole: "tenant" | "manager", children: React.ReactNode }) => {
+  const { open } = useSidebar();
+  
+  return (
+      <div className="min-h-screen w-full bg-[#1A1C1E]">
         <Navbar />
         <div style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
-          <div className="flex">
-            <div className="sticky top-0 h-screen">
-              <Sidebar userType={authUser.userRole.toLowerCase()} />
+          <div className="flex relative">
+            {/* Sidebar container */}
+            <div className="sticky top-0 h-[calc(100vh-var(--navbar-height))] z-40">
+              <Sidebar userType={userRole} />
             </div>
-            <div className="flex-grow transition-all duration-300 text-[#FFFFFF] p-4">
+            
+            {/* Main content that adjusts based on sidebar state */}
+            <div 
+              className="flex-grow transition-all duration-300 ease-in-out text-white p-4 md:p-6"
+              style={{
+                '--navbar-height': `${NAVBAR_HEIGHT}px`,
+                marginLeft: open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)',
+              } as React.CSSProperties}
+            >
               {children}
             </div>
           </div>
         </div>
       </div>
-    </SidebarProvider>
   );
 };
 

@@ -233,7 +233,7 @@ const getProperties = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             : client_1.Prisma.empty}
     `;
         const properties = yield prisma.$queryRaw(completeQuery);
-        res.json(properties);
+        res.json(properties.map((property) => (Object.assign({}, property))));
     }
     catch (error) {
         console.error("Error retrieving properties:", error);

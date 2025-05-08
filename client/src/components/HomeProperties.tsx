@@ -85,6 +85,7 @@ const HomeListings = () => {
               onFavoriteToggle={() => handleFavoriteToggle(property.id)}
               showFavoriteButton={!!authUser}
               propertyLink={`/search/${property.id}`}
+              userRole={authUser?.userRole || null}
             />
           ))}
         </div>
@@ -99,9 +100,10 @@ interface PropertyCardProps {
   onFavoriteToggle: () => void;
   showFavoriteButton: boolean;
   propertyLink: string;
+  userRole?: "tenant" | "manager" | null;
 }
 
-const PropertyCard = ({ property, isFavorite, onFavoriteToggle, showFavoriteButton, propertyLink }: PropertyCardProps) => {
+const PropertyCard = ({ property, isFavorite, onFavoriteToggle, showFavoriteButton, propertyLink, userRole }: PropertyCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Format price with commas

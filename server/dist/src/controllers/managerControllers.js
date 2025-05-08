@@ -79,17 +79,49 @@ const getManagerProperties = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const { cognitoId } = req.params;
         const properties = yield prisma.property.findMany({
             where: { managerCognitoId: cognitoId },
-            include: {
-                location: true,
-            },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                pricePerMonth: true,
+                securityDeposit: true,
+                applicationFee: true,
+                photoUrls: true,
+                amenities: true,
+                highlights: true,
+                isPetsAllowed: true,
+                isParkingIncluded: true,
+                beds: true,
+                baths: true,
+                squareFeet: true,
+                propertyType: true,
+                postedDate: true,
+                averageRating: true,
+                numberOfReviews: true,
+                location: {
+                    select: {
+                        id: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        country: true,
+                        postalCode: true,
+                    }
+                }
+            }
         });
+        console.log('Properties fetched from database:', properties.map(p => ({
+            id: p.id,
+            name: p.name,
+            photoUrls: p.photoUrls || []
+        })));
         const propertiesWithFormattedLocation = yield Promise.all(properties.map((property) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
             const coordinates = yield prisma.$queryRaw `SELECT ST_asText(coordinates) as coordinates from "Location" where id = ${property.location.id}`;
             const geoJSON = (0, wkt_1.wktToGeoJSON)(((_a = coordinates[0]) === null || _a === void 0 ? void 0 : _a.coordinates) || "");
             const longitude = geoJSON.coordinates[0];
             const latitude = geoJSON.coordinates[1];
-            return Object.assign(Object.assign({}, property), { location: Object.assign(Object.assign({}, property.location), { coordinates: {
+            return Object.assign(Object.assign({}, property), { photoUrls: property.photoUrls || [], location: Object.assign(Object.assign({}, property.location), { coordinates: {
                         longitude,
                         latitude,
                     } }) });
@@ -97,6 +129,7 @@ const getManagerProperties = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.json(propertiesWithFormattedLocation);
     }
     catch (err) {
+        console.error('Error retrieving manager properties:', err);
         res
             .status(500)
             .json({ message: `Error retrieving manager properties: ${err.message}` });

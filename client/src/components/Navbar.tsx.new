@@ -1,0 +1,279 @@
+"use client"
+
+import { NAVBAR_HEIGHT } from "@/lib/constants"
+import Image from "next/image"
+import Link from "next/link"
+import { useState, useEffect, useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { useGetAuthUserQuery } from "@/state/api"
+import { usePathname, useRouter } from "next/navigation"
+import { signOut } from "aws-amplify/auth"
+import {
+  Plus,
+  Search,
+  Settings,
+  LayoutDashboard,
+  LogOut,
+  User,
+  Bell,
+  ChevronDown,
+  LogIn,
+  UserPlus,
+  Home,
+  Building2,
+  Heart,
+  MessageSquare,
+  HelpCircle,
+  Menu,
+  X,
+} from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const Navbar = () => {
+  const { data: authUser, isLoading: authLoading } = useGetAuthUserQuery(undefined)
+  const router = useRouter()
+  const pathname = usePathname()
+  const [isLoading, setIsLoading] = useState(true)
+  const [logoLoaded, setLogoLoaded] = useState(false)
+  const navbarRef = useRef<HTMLDivElement>(null)
+
+  const isDashboardPage = pathname.includes("/managers") || pathname.includes("/tenants")
+
+  // Loading state management
+  useEffect(() => {
+    // Shorter loading time for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Navigation state handling
+  useEffect(() => {
+    // For Next.js App Router, we need to handle route changes differently
+    const handleRouteChangeComplete = () => {
+      setIsLoading(false)
+    }
+
+    // Clean up loading state if component unmounts during navigation
+    return () => {
+      setIsLoading(false)
+    }
+  }, [])
+  
+  // Fix for navbar height issue
+  useEffect(() => {
+    // Apply fixed height once logo is loaded
+    if (logoLoaded && navbarRef.current) {
+      navbarRef.current.style.height = `${NAVBAR_HEIGHT}px`
+    }
+  }, [logoLoaded])
+
+  const handleSignOut = async () => {
+    setIsLoading(true)
+    await signOut()
+    window.location.href = "/"
+  }
+
+  // Helper function to get user's initials for avatar
+  const getUserInitials = () => {
+    if (authUser?.userInfo?.name) {
+      const nameParts = authUser.userInfo.name.split(" ")
+      if (nameParts.length > 1) {
+        return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase()
+      }
+      return nameParts[0][0].toUpperCase()
+    }
+    return authUser?.userRole?.[0].toUpperCase() || "U"
+  }
+  
+  // Get background color based on user role
+  const getAvatarBgColor = () => {
+    if (authUser?.userRole?.toLowerCase() === "manager") {
+      return "bg-gradient-to-br from-blue-600 to-blue-800"
+    }
+    return "bg-gradient-to-br from-purple-600 to-purple-800"
+  }
+
+  return (
+    <>
+      {/* Loading Overlay - with dark theme */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-[#0F1112]/90 backdrop-blur-sm z-[100] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full border-4 border-blue-600/20 border-t-blue-600 animate-spin"></div>
+        </div>
+      )}
+
+      <div 
+        ref={navbarRef} 
+        className="fixed top-0 left-0 w-full z-50 transition-all duration-300" 
+        style={{ height: logoLoaded ? `${NAVBAR_HEIGHT}px` : 'auto' }}
+      >
+        <div className="flex justify-between items-center w-full h-full py-2 px-4 md:px-6 bg-[#0F1112] shadow-md border-b border-[#333] backdrop-blur-lg">
+          <div className="flex items-center gap-4 md:gap-6">
+            {isDashboardPage && (
+              <div className="md:hidden">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-[#222]">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </div>
+            )}
+            
+            <Link href="/" className="flex items-center gap-2">
+              <div className="relative h-8 w-8">
+                <Image
+                  src="/logo.png"
+                  alt="Rental App Logo"
+                  fill
+                  className="object-contain"
+                  onLoad={() => setLogoLoaded(true)}
+                  priority
+                />
+              </div>
+              <span className="text-white font-semibold text-lg hidden md:block">
+                Rental<span className="text-blue-500">App</span>
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {authLoading ? (
+              <Skeleton className="h-10 w-10 rounded-full" />
+            ) : authUser ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative rounded-full text-white hover:bg-[#222] hidden md:flex"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold">3</span>
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative rounded-full h-10 w-10 p-0">
+                      <Avatar className="h-10 w-10 border-2 border-[#333] hover:border-blue-500 transition-all duration-300">
+                        <AvatarImage src={authUser?.userInfo?.avatar || ""} alt={authUser?.userInfo?.name || "User"} />
+                        <AvatarFallback className={getAvatarBgColor()}>
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="bg-[#0F1112] shadow-xl rounded-xl border border-[#333] mt-2 p-1 min-w-[200px] animate-in fade-in-50 zoom-in-95 duration-200"
+                    align="end"
+                    sideOffset={8}
+                  >
+                    <DropdownMenuItem
+                      className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-gray-300 hover:text-blue-400 hover:bg-[#222] transition-colors duration-200 flex items-center gap-2 text-sm"
+                      onClick={() =>
+                        router.push(
+                          authUser.userRole?.toLowerCase() === "manager"
+                            ? "/managers/properties"
+                            : "/tenants/favorites",
+                          { scroll: false },
+                        )
+                      }
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    
+                    {authUser.userRole?.toLowerCase() === "manager" ? (
+                      <DropdownMenuItem
+                        className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-gray-300 hover:text-blue-400 hover:bg-[#222] transition-colors duration-200 flex items-center gap-2 text-sm"
+                        onClick={() => router.push("/managers/properties", { scroll: false })}
+                      >
+                        <Building2 className="w-4 h-4" />
+                        <span>My Properties</span>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-gray-300 hover:text-blue-400 hover:bg-[#222] transition-colors duration-200 flex items-center gap-2 text-sm"
+                        onClick={() => router.push("/tenants/favorites", { scroll: false })}
+                      >
+                        <Heart className="w-4 h-4" />
+                        <span>Favorites</span>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuItem
+                      className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-gray-300 hover:text-blue-400 hover:bg-[#222] transition-colors duration-200 flex items-center gap-2 text-sm"
+                      onClick={() => router.push(`/${authUser.userRole?.toLowerCase()}s/settings`, { scroll: false })}
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-[#333] my-1" />
+
+                    <DropdownMenuItem
+                      className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors duration-200 flex items-center gap-2 text-sm"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-[#111] hover:bg-[#222] text-white border border-[#333] hover:border-[#444] shadow-sm transition-all duration-300 rounded-lg"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      <span>Account</span>
+                      <ChevronDown className="ml-2 h-4 w-4 text-gray-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="bg-[#0F1112] shadow-xl rounded-xl border border-[#333] mt-2 p-1 min-w-[200px] animate-in fade-in-50 zoom-in-95 duration-200"
+                    align="end"
+                    sideOffset={8}
+                  >
+                    <DropdownMenuItem
+                      className="cursor-pointer py-2.5 px-3 my-1 rounded-md text-gray-300 hover:text-blue-400 hover:bg-[#222] transition-colors duration-200 flex items-center gap-2 text-sm"
+                      onClick={() => router.push("/signin")}
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-[#333] my-1" />
+
+                    <DropdownMenuItem
+                      className="cursor-pointer py-2.5 px-3 my-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center gap-2 text-sm"
+                      onClick={() => router.push("/signup")}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Sign Up</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default Navbar

@@ -82,7 +82,7 @@ export const HighlightIcons: Record<HighlightEnum, LucideIcon> = {
   SmokeFree: Cigarette,
   CableReady: Cable,
   SatelliteTV: Tv,
-  DoubleVanities: Maximize,
+  DoubleVanities: Bath,
   TubShower: Bath,
   Intercom: Phone,
   SprinklerSystem: Sprout,
@@ -91,6 +91,7 @@ export const HighlightIcons: Record<HighlightEnum, LucideIcon> = {
   GreatView: Mountain,
   QuietNeighborhood: VolumeX,
 };
+
 
 export enum PropertyTypeEnum {
   Rooms = "Rooms",
@@ -111,7 +112,7 @@ export const PropertyTypeIcons: Record<PropertyTypeEnum, LucideIcon> = {
 };
 
 // Add this constant at the end of the file
-export const NAVBAR_HEIGHT = 52; // in pixels
+export const NAVBAR_HEIGHT = 70; // in pixels
 
 // Test users for development
 export const testUsers = {
@@ -136,4 +137,58 @@ export const testUsers = {
 };
 
 
+
+// Add these to your lib/constants.ts file
+
+// Room type enum
+export enum RoomTypeEnum {
+  PRIVATE = "PRIVATE",
+  SHARED = "SHARED",
+  ENTIRE_UNIT = "ENTIRE_UNIT",
+}
+
+// Room amenities enum
+export enum RoomAmenityEnum {
+  PRIVATE_BATHROOM = "PRIVATE_BATHROOM",
+  PRIVATE_KITCHENETTE = "PRIVATE_KITCHENETTE", 
+  TELEVISION = "TELEVISION",
+  AIR_CONDITIONING = "AIR_CONDITIONING",
+  HEATING = "HEATING",
+  WARDROBE = "WARDROBE",
+  DESK = "DESK",
+  CHAIR = "CHAIR",
+  SOFA = "SOFA",
+  COFFEE_TABLE = "COFFEE_TABLE",
+  MICROWAVE = "MICROWAVE",
+  REFRIGERATOR = "REFRIGERATOR",
+  BALCONY = "BALCONY",
+  ETHERNET = "ETHERNET",
+}
+
+// Room features enum
+export enum RoomFeatureEnum {
+  ENSUITE = "ENSUITE",
+  LARGE_WINDOWS = "LARGE_WINDOWS",
+  CORNER_ROOM = "CORNER_ROOM",
+  QUIET = "QUIET",
+  SCENIC_VIEW = "SCENIC_VIEW",
+  GROUND_FLOOR = "GROUND_FLOOR",
+  TOP_FLOOR = "TOP_FLOOR",
+  ACCESSIBLE = "ACCESSIBLE",
+  NEWLY_RENOVATED = "NEWLY_RENOVATED",
+  KING_BED = "KING_BED",
+  QUEEN_BED = "QUEEN_BED",
+  TWIN_BEDS = "TWIN_BEDS",
+  WORKSPACE = "WORKSPACE",
+  NATURAL_LIGHT = "NATURAL_LIGHT",
+}
+
+
+
+// --- BEGIN FILE: @/lib/constants.ts ---
+
+
+
+
+// This is a duplicate HighlightEnum declaration - removing it to avoid conflicts
 

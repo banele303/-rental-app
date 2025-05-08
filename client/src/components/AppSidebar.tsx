@@ -64,10 +64,11 @@ const AppSidebar = ({ userType }: AppSidebarProps) => {
   return (
     <Sidebar
       collapsible="icon"
-      className="fixed left-0 bg-black/95 backdrop-blur-sm z-50 border-r border-white/5 shadow-2xl transition-all duration-300 ease-in-out"
+      className="fixed left-0 bg-black/95 backdrop-blur-sm z-50 border-r border-white/5 shadow-2xl transition-all duration-300 ease-in-out transform-gpu"
       style={{
         top: `${NAVBAR_HEIGHT}px`,
         height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
+        width: open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)',
       }}
     >
       {/* Background effects */}

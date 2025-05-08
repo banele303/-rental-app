@@ -10,8 +10,9 @@ import { Form } from "@/components/ui/form";
 import { ApplicationFormData, applicationSchema } from "@/lib/schemas";
 import { useCreateApplicationMutation, useGetAuthUserQuery } from "@/state/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const ApplicationModal = ({
   isOpen,
@@ -20,6 +21,7 @@ const ApplicationModal = ({
 }: ApplicationModalProps) => {
   const [createApplication] = useCreateApplicationMutation();
   const { data: authUser } = useGetAuthUserQuery();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
@@ -33,20 +35,36 @@ const ApplicationModal = ({
 
   const onSubmit = async (data: ApplicationFormData) => {
     if (!authUser || authUser.userRole !== "tenant") {
-      console.error(
-        "You must be logged in as a tenant to submit an application"
-      );
+      toast.error("Authentication Required", {
+        description: "You must be logged in as a tenant to submit an application",
+        action: {
+          label: "Login",
+          onClick: () => window.location.href = "/login"
+        }
+      });
       return;
     }
 
-    await createApplication({
-      ...data,
-      applicationDate: new Date().toISOString(),
-      status: "Pending",
-      propertyId: propertyId,
-      tenantCognitoId: authUser.cognitoInfo.userId,
-    });
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await createApplication({
+        ...data,
+        applicationDate: new Date().toISOString(),
+        status: "Pending",
+        propertyId: propertyId,
+        tenantCognitoId: authUser.cognitoInfo.userId,
+      });
+      toast.success("Application Submitted", {
+        description: "Your application has been successfully submitted."
+      });
+      onClose();
+    } catch (error) {
+      toast.error("Submission Failed", {
+        description: "There was an error submitting your application. Please try again."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -81,8 +99,12 @@ const ApplicationModal = ({
               type="textarea"
               placeholder="Enter any additional information"
             />
-            <Button type="submit" className="bg-primary-700 text-white w-full">
-              Submit Application
+            <Button 
+              type="submit" 
+              className="bg-primary-700 text-white w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Application"}
             </Button>
           </form>
         </Form>

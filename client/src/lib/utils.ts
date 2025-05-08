@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { toast } from "sonner";
-
+import { z } from "zod";
+import { RoomTypeEnum, RoomFeatureEnum, RoomAmenityEnum } from "./constants";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -12,12 +13,12 @@ export function formatEnumString(str: string) {
 
 export function formatPriceValue(value: number | null, isMin: boolean) {
   if (value === null || value === 0)
-    return isMin ? "Any Min Price" : "Any Max Price";
+    return isMin ? "Min Price" : "Max Price";
   if (value >= 1000) {
     const kValue = value / 1000;
-    return isMin ? `$${kValue}k+` : `<$${kValue}k`;
+    return isMin ? `R${kValue}k+` : `<R${kValue}k`;
   }
-  return isMin ? `$${value}+` : `<$${value}`;
+  return isMin ? `R${value}+` : `<R${value}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,6 +87,10 @@ export const createNewUserInDatabase = async (
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'R',
   }).format(amount);
 }
+
+
+
+

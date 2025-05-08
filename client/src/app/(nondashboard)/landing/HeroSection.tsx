@@ -67,30 +67,44 @@ const HeroSection = () => {
     try {
       const trimmedQuery = searchQuery.trim();
       if (!trimmedQuery) return;
+      
+      // Search for locations without country restriction
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
           trimmedQuery
         )}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }&fuzzyMatch=true`
+        }&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`
       );
       const data = await response.json();
+      
       if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
+        // Use the first result directly
+        const feature = data.features[0];
+        const [lng, lat] = feature.center;
+        
+        // Extract just the place name without country
+        const locationName = feature.place_name.split(',')[0];
+        
+        // Update the filters in the redux store
         dispatch(
           setFilters({
-            location: trimmedQuery,
-            coordinates: [lat, lng],
+            location: locationName,
+            coordinates: [lng, lat] as [number, number],
           })
         );
+        
+        // Navigate to the search page with the query parameters
         const params = new URLSearchParams({
-          location: trimmedQuery,
+          location: locationName,
+          coordinates: `${lng},${lat}`,
           lat: lat.toString(),
           lng: lng.toString(),
         });
+        
         router.push(`/search?${params.toString()}`);
       }
     } catch (error) {
-      console.error("error search location:", error);
+      console.error("Error searching location:", error);
     }
   };
 
@@ -100,23 +114,24 @@ const HeroSection = () => {
 
     const university = universityLocations[universityKey as keyof typeof universityLocations];
     if (university) {
+      // Get the coordinates in the correct format
       const [lat, lng] = university.coordinates;
 
       // Update the search query to the university name
       setSearchQuery(university.name);
 
-      // Update the filters in the redux store
+      // Update the filters in the redux store with the correct coordinate format
       dispatch(
         setFilters({
           location: university.name,
-          coordinates: [lat, lng],
+          coordinates: [lng, lat] as [number, number], // Use [lng, lat] format to match search page
         })
       );
 
       // Navigate to the search page with the university coordinates
       const params = new URLSearchParams({
         location: university.name,
-        coordinates: `${lng},${lat}`, // Format as lng,lat for consistency with search bar
+        coordinates: `${lng},${lat}`, // Format as lng,lat for consistency
         lat: lat.toString(),
         lng: lng.toString(),
       });

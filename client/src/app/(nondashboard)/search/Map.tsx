@@ -20,25 +20,59 @@ const Map = () => {
   useEffect(() => {
     if (isLoading || isError || !properties) return;
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current!,
-      style: "mapbox://styles/alexbsibanda/cm9r6ojpt008m01s046hwhlbp",
-      center: filters.coordinates || [-74.5, 40],
-      zoom: 9,
-    });
+    // Default coordinates for South Africa (Johannesburg)
+    const defaultCoordinates: [number, number] = [28.0473, -26.2041];
+    
+    // Validate coordinates to ensure they're valid numbers within range
+    let validCoordinates: [number, number];
+    if (
+      filters.coordinates && 
+      Array.isArray(filters.coordinates) && 
+      filters.coordinates.length === 2 &&
+      typeof filters.coordinates[0] === 'number' && 
+      typeof filters.coordinates[1] === 'number' &&
+      filters.coordinates[0] >= -180 && 
+      filters.coordinates[0] <= 180 &&
+      filters.coordinates[1] >= -90 && 
+      filters.coordinates[1] <= 90
+    ) {
+      validCoordinates = filters.coordinates;
+    } else {
+      validCoordinates = defaultCoordinates;
+    }
 
-    properties.forEach((property) => {
-      const marker = createPropertyMarker(property, map);
-      const markerElement = marker.getElement();
-      const path = markerElement.querySelector("path[fill='#3FB1CE']");
-      if (path) path.setAttribute("fill", "#000000");
-    });
+    try {
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current!,
+        style: "mapbox://styles/alexbsibanda/cm9r6ojpt008m01s046hwhlbp",
+        center: validCoordinates,
+        zoom: 9,
+      });
 
-    const resizeMap = () => {
-      if (map) setTimeout(() => map.resize(), 700);
-    };
-    resizeMap();
+      // Only add markers if properties have valid coordinates
+      properties.forEach((property) => {
+        try {
+          const marker = createPropertyMarker(property, map);
+          // Only modify marker if it was successfully created
+          if (marker) {
+            const markerElement = marker.getElement();
+            const path = markerElement.querySelector("path[fill='#3FB1CE']");
+            if (path) path.setAttribute("fill", "#000000");
+          }
+        } catch (err) {
+          console.error("Error creating marker:", err);
+        }
+      });
 
+      const resizeMap = () => {
+        if (map) setTimeout(() => map.resize(), 700);
+      };
+      resizeMap();
+
+      return () => map.remove();
+    } catch (err) {
+      console.error("Error creating map:", err);
+    }
     return () => map.remove();
   }, [isLoading, isError, properties, filters.coordinates]);
 
@@ -60,29 +94,46 @@ const Map = () => {
 };
 
 const createPropertyMarker = (property: Property, map: mapboxgl.Map) => {
-  const marker = new mapboxgl.Marker()
-    .setLngLat([
-      property.location.coordinates.longitude,
-      property.location.coordinates.latitude,
-    ])
-    .setPopup(
-      new mapboxgl.Popup().setHTML(
-        `
-        <div class="marker-popup">
-          <div class="marker-popup-image"></div>
-          <div>
-            <a href="/search/${property.id}" target="_blank" class="marker-popup-title">${property.name}</a>
-            <p class="marker-popup-price">
-              R${property.pricePerMonth}
-              <span class="marker-popup-price-unit"> / month</span>
-            </p>
+  // Validate property coordinates before creating marker
+  if (!property.location?.coordinates?.longitude || !property.location?.coordinates?.latitude) {
+    console.error(`Property ${property.id} has invalid coordinates`);
+    return null;
+  }
+  
+  // Check if coordinates are within valid ranges
+  const lng = property.location.coordinates.longitude;
+  const lat = property.location.coordinates.latitude;
+  
+  if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
+    console.error(`Property ${property.id} has out of range coordinates: [${lng}, ${lat}]`);
+    return null;
+  }
+  
+  try {
+    const marker = new mapboxgl.Marker()
+      .setLngLat([lng, lat])
+      .setPopup(
+        new mapboxgl.Popup().setHTML(
+          `
+          <div class="marker-popup">
+            <div class="marker-popup-image"></div>
+            <div>
+              <a href="/search/${property.id}" target="_blank" class="marker-popup-title">${property.name}</a>
+              <p class="marker-popup-price">
+                R${property.pricePerMonth}
+                <span class="marker-popup-price-unit"> / month</span>
+              </p>
+            </div>
           </div>
-        </div>
-        `
+          `
+        )
       )
-    )
-    .addTo(map);
-  return marker;
+      .addTo(map);
+    return marker;
+  } catch (err) {
+    console.error(`Error creating marker for property ${property.id}:`, err);
+    return null;
+  }
 };
 
 export default Map;

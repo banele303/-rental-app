@@ -41,8 +41,10 @@ const Map = () => {
       validCoordinates = defaultCoordinates;
     }
 
+    let mapInstance: mapboxgl.Map | null = null;
+    
     try {
-      const map = new mapboxgl.Map({
+      mapInstance = new mapboxgl.Map({
         container: mapContainerRef.current!,
         style: "mapbox://styles/alexbsibanda/cm9r6ojpt008m01s046hwhlbp",
         center: validCoordinates,
@@ -52,7 +54,7 @@ const Map = () => {
       // Only add markers if properties have valid coordinates
       properties.forEach((property) => {
         try {
-          const marker = createPropertyMarker(property, map);
+          const marker = createPropertyMarker(property, mapInstance!);
           // Only modify marker if it was successfully created
           if (marker) {
             const markerElement = marker.getElement();
@@ -65,15 +67,20 @@ const Map = () => {
       });
 
       const resizeMap = () => {
-        if (map) setTimeout(() => map.resize(), 700);
+        if (mapInstance) setTimeout(() => mapInstance.resize(), 700);
       };
       resizeMap();
-
-      return () => map.remove();
+      
     } catch (err) {
       console.error("Error creating map:", err);
     }
-    return () => map.remove();
+    
+    // Return cleanup function
+    return () => {
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+    };
   }, [isLoading, isError, properties, filters.coordinates]);
 
   if (isLoading) return <>Loading... here</>;

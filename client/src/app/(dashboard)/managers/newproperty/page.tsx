@@ -58,7 +58,7 @@ const FormSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-[#0B1120]/80 border border-[#1E2A45] rounded-lg overflow-hidden mb-6 shadow-lg">
+    <div className=" border border-[#1E2A45] rounded-lg overflow-hidden mb-6 shadow-lg">
       <div
         className="flex items-center justify-between p-4 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}

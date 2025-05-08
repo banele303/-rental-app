@@ -167,39 +167,47 @@ export default function CitySelection() {
 
   const handleLocationSearch = async () => {
     try {
-      let trimmedQuery = searchQuery.trim();
+      const trimmedQuery = searchQuery.trim();
       if (!trimmedQuery) return;
       
-      // Append South Africa to the query if it's not already included
-      if (!trimmedQuery.toLowerCase().includes('south africa')) {
-        trimmedQuery = `${trimmedQuery}, South Africa`;
-      }
-      
+      // Search for locations without country restriction
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
           trimmedQuery
         )}.json?access_token=${
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }&country=za&fuzzyMatch=true`
+        }&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`
       );
       const data = await response.json();
+      
       if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
+        // Use the first result directly
+        const feature = data.features[0];
+        const [lng, lat] = feature.center;
+        
+        // Extract just the place name without country
+        const locationName = feature.place_name.split(',')[0];
+        
+        // Update the filters in the redux store
         dispatch(
           setFilters({
-            location: trimmedQuery,
-            coordinates: [lat, lng] as [number, number],
+            location: locationName,
+            coordinates: [lng, lat] as [number, number],
           })
         );
+        
+        // Navigate to the search page with the query parameters
         const params = new URLSearchParams({
-          location: trimmedQuery,
+          location: locationName,
+          coordinates: `${lng},${lat}`,
           lat: lat.toString(),
           lng: lng.toString(),
         });
+        
         router.push(`/search?${params.toString()}`);
       }
     } catch (error) {
-      console.error("error search location:", error);
+      console.error("Error searching location:", error);
     }
   };
 

@@ -52,7 +52,7 @@ const Map = () => {
       });
 
       // Only add markers if properties have valid coordinates
-      properties.forEach((property) => {
+      properties.forEach((property: Property) => {
         try {
           const marker = createPropertyMarker(property, mapInstance!);
           // Only modify marker if it was successfully created

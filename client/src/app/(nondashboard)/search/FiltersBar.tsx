@@ -101,24 +101,21 @@ const FiltersBar = () => {
       // Don't search if input is empty
       if (!searchInput.trim()) return
 
-      // Add South Africa as a country filter to restrict search to SA only
+      // Search for locations without country restriction
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput)}.json?access_token=${
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }&country=za&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`,
+        }&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`,
       )
       const data = await response.json()
       
       if (data.features && data.features.length > 0) {
-        // Find the first result that is in South Africa
-        const saFeature = data.features.find((feature: MapboxFeature) => 
-          feature.context?.some(ctx => 
-            ctx.id.startsWith('country') && ctx.short_code === 'za'
-          )
-        ) || data.features[0]; // Fallback to first result if no SA result found
+        // Use the first result directly
+        const feature = data.features[0];
+        const [lng, lat] = feature.center
         
-        const [lng, lat] = saFeature.center
-        const locationName = saFeature.place_name.split(',')[0]; // Get just the place name without country
+        // Extract just the place name without country
+        const locationName = feature.place_name.split(',')[0];
         
         const newFilters = {
           ...filters,
@@ -127,28 +124,6 @@ const FiltersBar = () => {
         }
         dispatch(setFilters(newFilters))
         updateURL(newFilters)
-      } else {
-        // If no results, try again with 'South Africa' appended
-        const fallbackResponse = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput + ' South Africa')}.json?access_token=${
-            process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-          }&country=za&fuzzyMatch=true`,
-        )
-        const fallbackData = await fallbackResponse.json()
-        
-        if (fallbackData.features && fallbackData.features.length > 0) {
-          const feature: MapboxFeature = fallbackData.features[0];
-          const [lng, lat] = feature.center
-          const locationName = feature.place_name.split(',')[0];
-          
-          const newFilters = {
-            ...filters,
-            location: locationName,
-            coordinates: [lng, lat] as [number, number],
-          }
-          dispatch(setFilters(newFilters))
-          updateURL(newFilters)
-        }
       }
     } catch (err) {
       console.error("Error searching location:", err)

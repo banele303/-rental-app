@@ -128,7 +128,6 @@ export const api = createApi({
       // This should never be reached due to the throw in the loop, but TypeScript needs it
       throw lastError;
     }
-    }
   }),
   reducerPath: "api",
   tagTypes: ["Managers", "Tenants", "Properties", "PropertyDetails", "Leases", "Payments", "Applications", "Rooms"],

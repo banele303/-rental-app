@@ -440,8 +440,8 @@ const Applications = () => {
                       {searchTerm 
                         ? "No applications match your search criteria." 
                         : activeTab !== "all" 
-                          ? `You don't have any ${activeTab} applications.` 
-                          : "You don't have any applications yet."}
+                          ? `You don&apos;t have any ${activeTab} applications.` 
+                          : "You don&apos;t have any applications yet."}
                     </p>
                   </div>
                 ) : (

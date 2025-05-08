@@ -275,9 +275,27 @@ export const getProperties = async (
       }
     `;
 
-    const properties = await prisma.$queryRaw(completeQuery);
+    interface PropertyResult {
+      id: number;
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      price: number;
+      bedrooms: number;
+      bathrooms: number;
+      squareFootage: number;
+      description: string;
+      status: string;
+      createdAt: Date;
+      updatedAt: Date;
+      leases: string; // JSON string
+    }
 
-    res.json(properties);
+    const properties = await prisma.$queryRaw<PropertyResult[]>(completeQuery);
+
+    res.json(properties.map((property: PropertyResult) => ({ ...property })));
   } catch (error: any) {
     console.error("Error retrieving properties:", error);
     res

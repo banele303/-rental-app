@@ -16,7 +16,7 @@ const ImagePreviews = ({ images }: ImagePreviewsProps) => {
   };
 
   return (
-    <div className="relative h-[450px] w-full">
+    <div className="relative h-[350px] md:h-[400px] lg:h-[400px] xl:h-[450px] w-full max-w-5xl mx-auto mt-6 pt-4 pb-2 px-2">
       {images.map((image, index) => (
         <div
           key={image}
@@ -29,7 +29,8 @@ const ImagePreviews = ({ images }: ImagePreviewsProps) => {
             alt={`Property Image ${index + 1}`}
             fill
             priority={index == 0}
-            className="object-cover cursor-pointer transition-transform duration-500 ease-in-out"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+            className="object-cover cursor-pointer transition-transform duration-500 ease-in-out rounded-lg shadow-md"
           />
         </div>
       ))}

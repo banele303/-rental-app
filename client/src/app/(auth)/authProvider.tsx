@@ -10,6 +10,7 @@ import {
   useAuthenticator,
   View,
 } from "@aws-amplify/ui-react";
+import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation";
 
 // https://docs.amplify.aws/gen1/javascript/tools/libraries/configure-categories/
@@ -28,10 +29,7 @@ const components = {
     return (
       <View className="mt-4 mb-7">
         <Heading level={3} className="!text-2xl !font-bold">
-          RENT
-          <span className="text-secondary-500 font-light hover:!text-primary-300">
-            IFUL
-          </span>
+            <Image src="/student24-logo.png" alt="Rentiful Logo" width={128} height={148} className="" />
         </Heading>
         <p className="text-muted-foreground mt-2">
           <span className="font-bold">Welcome!</span> Please sign in to continue
@@ -71,8 +69,8 @@ const components = {
             hasError={!!validationErrors?.["custom:role"]}
             isRequired
           >
-            <Radio value="tenant">Tenant</Radio>
-            <Radio value="manager">Manager</Radio>
+            <Radio value="tenant">Student</Radio>
+            <Radio value="manager">LandLoard</Radio>
           </RadioGroupField>
         </>
       );

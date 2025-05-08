@@ -18,7 +18,7 @@ interface CustomFormFieldProps {
   name: string
   label?: string
   placeholder?: string
-  type?: "text" | "number" | "email" | "password" | "textarea" | "select" | "switch" | "file" | "multi-select"
+  type?: "text" | "number" | "email" | "password" | "textarea" | "select" | "switch" | "file" | "multi-select" | "date"
   options?: Option[]
   className?: string
   labelClassName?: string

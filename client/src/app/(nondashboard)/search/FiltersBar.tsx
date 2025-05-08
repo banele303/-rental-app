@@ -27,6 +27,18 @@ import {
 } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
 
+// Define MapboxFeature interface outside of any function
+interface MapboxFeature {
+  center: [number, number];
+  place_name: string;
+  context?: Array<{
+    id: string;
+    short_code: string;
+  }>;
+  id?: string;
+  short_code?: string;
+}
+
 const FiltersBar = () => {
   const dispatch = useDispatch()
   const router = useRouter()
@@ -89,21 +101,54 @@ const FiltersBar = () => {
       // Don't search if input is empty
       if (!searchInput.trim()) return
 
+      // Add South Africa as a country filter to restrict search to SA only
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput)}.json?access_token=${
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }&fuzzyMatch=true`,
+        }&country=za&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`,
       )
       const data = await response.json()
+      
       if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center
+        // Find the first result that is in South Africa
+        const saFeature = data.features.find((feature: MapboxFeature) => 
+          feature.context?.some(ctx => 
+            ctx.id.startsWith('country') && ctx.short_code === 'za'
+          )
+        ) || data.features[0]; // Fallback to first result if no SA result found
+        
+        const [lng, lat] = saFeature.center
+        const locationName = saFeature.place_name.split(',')[0]; // Get just the place name without country
+        
         const newFilters = {
           ...filters,
-          location: searchInput,
+          location: locationName,
           coordinates: [lng, lat] as [number, number],
         }
         dispatch(setFilters(newFilters))
         updateURL(newFilters)
+      } else {
+        // If no results, try again with 'South Africa' appended
+        const fallbackResponse = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput + ' South Africa')}.json?access_token=${
+            process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+          }&country=za&fuzzyMatch=true`,
+        )
+        const fallbackData = await fallbackResponse.json()
+        
+        if (fallbackData.features && fallbackData.features.length > 0) {
+          const feature: MapboxFeature = fallbackData.features[0];
+          const [lng, lat] = feature.center
+          const locationName = feature.place_name.split(',')[0];
+          
+          const newFilters = {
+            ...filters,
+            location: locationName,
+            coordinates: [lng, lat] as [number, number],
+          }
+          dispatch(setFilters(newFilters))
+          updateURL(newFilters)
+        }
       }
     } catch (err) {
       console.error("Error searching location:", err)
@@ -142,7 +187,7 @@ const FiltersBar = () => {
           <Search className="h-4 w-4 text-blue-300" />
         </div>
         <Input
-          placeholder="Search location"
+          placeholder="Search location in South Africa"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -159,38 +204,36 @@ const FiltersBar = () => {
       </div>
 
       {/* Price Range */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4 ml-2">
         <Select
           value={filters.priceRange[0]?.toString() || "any"}
           onValueChange={(value) => handleFilterChange("priceRange", value, true)}
         >
-          <SelectTrigger className="w-28 rounded-full border-blue-200 bg-blue-50 hover:bg-white focus:bg-white transition-all shadow-sm">
-            <SelectValue>{formatPriceValue(filters.priceRange[0], true)}</SelectValue>
+          <SelectTrigger className="w-32 rounded-full border-blue-200 bg-blue-50 hover:bg-white focus:bg-white transition-all shadow-sm">
+            <SelectValue className="mr-4">{formatPriceValue(filters.priceRange[0], true)}</SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-white">
+          <SelectContent className="bg-white ">
             <SelectItem value="any">Min Price</SelectItem>
             {[500, 1000, 1500, 2000, 3000, 5000, 10000].map((price) => (
               <SelectItem key={price} value={price.toString()}>
-                ${price / 1000}k+
+                R{price / 1000}k+
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <ArrowRight className="w-5 h-4 text-blue-300" />
-
         <Select
           value={filters.priceRange[1]?.toString() || "any"}
           onValueChange={(value) => handleFilterChange("priceRange", value, false)}
         >
-          <SelectTrigger className="w-28 rounded-full border-blue-200 bg-blue-50 hover:bg-white focus:bg-white transition-all shadow-sm">
-            <SelectValue>{formatPriceValue(filters.priceRange[1], false)}</SelectValue>
+          <SelectTrigger className="w-32 rounded-full border-blue-200 bg-blue-50 hover:bg-white focus:bg-white transition-all shadow-sm">
+            <SelectValue className="pr-4">{formatPriceValue(filters.priceRange[1], false)}</SelectValue>
           </SelectTrigger>
           <SelectContent className="bg-white">
             <SelectItem value="any">Max Price</SelectItem>
             {[1000, 2000, 3000, 5000, 10000].map((price) => (
               <SelectItem key={price} value={price.toString()}>
-                &lt;${price / 1000}k
+                &lt;R{price / 1000}k
               </SelectItem>
             ))}
           </SelectContent>

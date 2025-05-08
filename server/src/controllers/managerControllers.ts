@@ -83,10 +83,43 @@ export const getManagerProperties = async (
     const { cognitoId } = req.params;
     const properties = await prisma.property.findMany({
       where: { managerCognitoId: cognitoId },
-      include: {
-        location: true,
-      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        pricePerMonth: true,
+        securityDeposit: true,
+        applicationFee: true,
+        photoUrls: true,
+        amenities: true,
+        highlights: true,
+        isPetsAllowed: true,
+        isParkingIncluded: true,
+        beds: true,
+        baths: true,
+        squareFeet: true,
+        propertyType: true,
+        postedDate: true,
+        averageRating: true,
+        numberOfReviews: true,
+        location: {
+          select: {
+            id: true,
+            address: true,
+            city: true,
+            state: true,
+            country: true,
+            postalCode: true,
+          }
+        }
+      }
     });
+
+    console.log('Properties fetched from database:', properties.map(p => ({
+      id: p.id,
+      name: p.name,
+      photoUrls: p.photoUrls || []
+    })));
 
     const propertiesWithFormattedLocation = await Promise.all(
       properties.map(async (property) => {
@@ -99,6 +132,7 @@ export const getManagerProperties = async (
 
         return {
           ...property,
+          photoUrls: property.photoUrls || [],
           location: {
             ...property.location,
             coordinates: {
@@ -112,6 +146,7 @@ export const getManagerProperties = async (
 
     res.json(propertiesWithFormattedLocation);
   } catch (err: any) {
+    console.error('Error retrieving manager properties:', err);
     res
       .status(500)
       .json({ message: `Error retrieving manager properties: ${err.message}` });

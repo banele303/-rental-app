@@ -12,11 +12,15 @@ import CardCompact from "@/components/CardCompact";
 import React from "react";
 
 const Listings = () => {
-  const { data: authUser } = useGetAuthUserQuery();
-  const { data: tenant } = useGetTenantQuery(
+  const { data: authUser, isLoading: authLoading } = useGetAuthUserQuery();
+  const { data: tenant, isError: tenantError } = useGetTenantQuery(
     authUser?.cognitoInfo?.userId || "",
     {
       skip: !authUser?.cognitoInfo?.userId,
+      // Don't refetch on focus to prevent unnecessary error toasts
+      refetchOnFocus: false,
+      // Don't refetch on reconnect to prevent unnecessary error toasts
+      refetchOnReconnect: false,
     }
   );
   const [addFavorite] = useAddFavoritePropertyMutation();
@@ -28,7 +32,10 @@ const Listings = () => {
     data: properties,
     isLoading,
     isError,
-  } = useGetPropertiesQuery(filters);
+  } = useGetPropertiesQuery(filters, {
+    // Make sure we can still fetch properties even if auth fails
+    skip: false
+  });
 
   const handleFavoriteToggle = async (propertyId: number) => {
     if (!authUser) return;
@@ -69,7 +76,7 @@ const Listings = () => {
   );
 
   return (
-    <div className="w-full max-w-screen-xl  mx-auto">
+    <div className="w-full max-w-screen-xl  pt-6 mx-auto">
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm px-4 py-3 shadow-sm">
         <h3 className="text-sm font-semibold flex flex-wrap items-center gap-1">
           <span className="text-lg">{properties.length}</span>
@@ -81,35 +88,33 @@ const Listings = () => {
       
       <div className="px-2 sm:px-4 pb-6">
         <div className="grid gap-4 sm:gap-6">
-          {properties?.map((property) =>
-            viewMode === "grid" ? (
+          {properties?.map((property) => {
+            // Check if property is in favorites, only if user is logged in
+            const isFavorite = authUser && tenant?.favorites ? 
+              tenant.favorites.some((fav: Property) => fav.id === property.id) : false;
+              
+            return viewMode === "list" ? (
               <Card
                 key={property.id}
                 property={property}
-                isFavorite={
-                  tenant?.favorites?.some(
-                    (fav: Property) => fav.id === property.id
-                  ) || false
-                }
+                isFavorite={isFavorite}
                 onFavoriteToggle={() => handleFavoriteToggle(property.id)}
                 showFavoriteButton={!!authUser}
                 propertyLink={`/search/${property.id}`}
+                userRole={authUser?.userRole || null}
               />
             ) : (
               <CardCompact
                 key={property.id}
                 property={property}
-                isFavorite={
-                  tenant?.favorites?.some(
-                    (fav: Property) => fav.id === property.id
-                  ) || false
-                }
+                isFavorite={isFavorite}
                 onFavoriteToggle={() => handleFavoriteToggle(property.id)}
                 showFavoriteButton={!!authUser}
                 propertyLink={`/search/${property.id}`}
+                userRole={authUser?.userRole || null}
               />
-            )
-          )}
+            );
+          })}
         </div>
       </div>
     </div>

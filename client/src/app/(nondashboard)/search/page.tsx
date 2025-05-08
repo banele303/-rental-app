@@ -3,15 +3,17 @@
 import { NAVBAR_HEIGHT } from "@/lib/constants";
 import { useAppDispatch, useAppSelector } from "@/state/redux";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import FiltersBar from "./FiltersBar";
 import FiltersFull from "./FiltersFull";
 import { cleanParams } from "@/lib/utils";
 import { setFilters } from "@/state";
 import Map from "./Map";
 import Listings from "./Listings";
+import Loading from "@/components/Loading";
 
-const SearchPage = () => {
+// Component that uses useSearchParams wrapped in Suspense
+const SearchPageContent = () => {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const isFiltersFullOpen = useAppSelector(
@@ -55,14 +57,23 @@ const SearchPage = () => {
               : "w-0 opacity-0 invisible"
           }`}
         >
-
-          <FiltersFull /> </div>
+          <FiltersFull />
+        </div>
         <Map />
         <div className="basis-12/12 md:basis-5/12 overflow-y-auto">
           <Listings />
         </div>
       </div>
     </div>
+  );
+};
+
+// Main component that wraps SearchPageContent with Suspense
+const SearchPage = () => {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SearchPageContent />
+    </Suspense>
   );
 };
 

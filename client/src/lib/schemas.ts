@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { PropertyTypeEnum } from "@/lib/constants";
+import { PropertyTypeEnum, RoomTypeEnum } from "@/lib/constants";
 
 export const propertySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -41,3 +41,77 @@ export const settingsSchema = z.object({
 });
 
 export type SettingsFormData = z.infer<typeof settingsSchema>;
+
+
+// Add these to your lib/schemas.ts file
+
+
+
+// Room form data schema
+export const roomSchema = z.object({
+  propertyId: z.number().or(z.string().transform(val => parseInt(val))),
+  name: z.string().min(1, "Room name is required"),
+  description: z.string().optional(),
+  pricePerMonth: z.number().min(1, "Price is required")
+    .or(z.string().transform(val => parseFloat(val)).refine(val => val >= 1, { message: "Price is required" })),
+  securityDeposit: z.number().or(z.string().transform(val => parseFloat(val))).default(0),
+  squareFeet: z.number().or(z.string().transform(val => parseInt(val))).optional().nullable(),
+  isAvailable: z.boolean().or(z.string().transform(val => val === "true")).default(true),
+  availableFrom: z.date().or(z.string().transform(val => new Date(val))).optional().nullable(),
+  roomType: z.nativeEnum(RoomTypeEnum).default(RoomTypeEnum.PRIVATE),
+  capacity: z.number().min(1).or(z.string().transform(val => parseInt(val)).refine(val => val >= 1, { message: "Capacity must be at least 1" })).default(1),
+  amenities: z.array(z.string()).default([]),
+  features: z.array(z.string()).default([]),
+  photoUrls: z.any().optional(), // handles File objects for upload
+});
+
+// Type for room form data
+export type RoomFormData = z.infer<typeof roomSchema>;
+
+
+
+export interface ApiProperty {
+  id: number;
+  name: string;
+  description?: string | null;
+  photoUrls: string[];
+  pricePerMonth: number;
+  securityDeposit?: number | null;
+  applicationFee?: number | null;
+  isPetsAllowed: boolean;
+  isParkingIncluded: boolean;
+  propertyType: PropertyTypeEnum;
+  beds: number;
+  baths: number;
+  squareFeet?: number | null;
+  amenities: AmenityEnum[];
+  highlights: HighlightEnum[];
+  managerCognitoId: string;
+  locationId: number;
+
+  createdAt: string;
+  updatedAt: string;
+  // Add other potential fields like manager: ApiManager if included
+}
+
+export interface ApiRoom {
+  id: number;
+  propertyId: number;
+  name: string;
+  description?: string | null;
+  photoUrls: string[];
+  pricePerMonth: number;
+  securityDeposit?: number | null;
+  squareFeet?: number | null;
+  isAvailable: boolean;
+  availableFrom?: string | null;
+  roomType: RoomTypeEnum;
+  capacity?: number | null;
+  amenities: AmenityEnum[];
+  features: string[];
+  createdAt: string;
+  updatedAt: string;
+  // Add property?: ApiProperty if included by the backend
+}
+
+

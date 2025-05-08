@@ -15,6 +15,7 @@ const tenantRoutes_1 = __importDefault(require("./routes/tenantRoutes"));
 const managerRoutes_1 = __importDefault(require("./routes/managerRoutes"));
 const propertyRoutes_1 = __importDefault(require("./routes/propertyRoutes"));
 const leaseRoutes_1 = __importDefault(require("./routes/leaseRoutes"));
+const roomRoutes_1 = __importDefault(require("./routes/roomRoutes"));
 const applicationRoutes_1 = __importDefault(require("./routes/applicationRoutes"));
 console.log("🚀 Starting server initialization...");
 /* CONFIGURATIONS */
@@ -40,6 +41,7 @@ app.get("/", (req, res) => {
 });
 app.use("/applications", applicationRoutes_1.default);
 app.use("/properties", propertyRoutes_1.default);
+app.use("/rooms", roomRoutes_1.default);
 app.use("/leases", leaseRoutes_1.default);
 app.use("/tenants", (0, authMiddleware_1.authMiddleware)(["tenant"]), tenantRoutes_1.default);
 app.use("/managers", (0, authMiddleware_1.authMiddleware)(["manager"]), managerRoutes_1.default);

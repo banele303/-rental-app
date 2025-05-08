@@ -65,6 +65,12 @@ enum PaymentStatus {
   Overdue
 }
 
+enum RoomType {
+  PRIVATE
+  SHARED
+  ENTIRE_UNIT
+}
+
 model Property {
   id                Int          @id @default(autoincrement())
   name              String
@@ -87,17 +93,43 @@ model Property {
   locationId        Int
   managerCognitoId  String
 
+  // Relations
   location     Location      @relation(fields: [locationId], references: [id])
   manager      Manager       @relation(fields: [managerCognitoId], references: [cognitoId])
   leases       Lease[]
   applications Application[]
   favoritedBy  Tenant[]      @relation("TenantFavorites")
   tenants      Tenant[]      @relation("TenantProperties")
+  rooms        Room[]        @relation("PropertyRooms")
+}
+
+model Room {
+  id                Int          @id @default(autoincrement())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  name              String
+  description       String?      @db.Text
+  pricePerMonth     Float
+  securityDeposit   Float        @default(0)
+  squareFeet        Int?
+  photoUrls         String[]     @default([])
+  amenities         String[]     @default([])
+  isAvailable       Boolean      @default(true)
+  availableFrom     DateTime?
+  roomType          RoomType     @default(PRIVATE)
+  capacity          Int          @default(1)
+  features          String[]     @default([])
+
+  // Relations
+  property          Property     @relation("PropertyRooms", fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId        Int
+
+  @@index([propertyId])
 }
 
 model Manager {
-  id          Int    @id @default(autoincrement())
-  cognitoId   String @unique
+  id          Int      @id @default(autoincrement())
+  cognitoId   String   @unique
   name        String
   email       String
   phoneNumber String
@@ -106,8 +138,8 @@ model Manager {
 }
 
 model Tenant {
-  id          Int    @id @default(autoincrement())
-  cognitoId   String @unique
+  id          Int      @id @default(autoincrement())
+  cognitoId   String   @unique
   name        String
   email       String
   phoneNumber String
@@ -142,9 +174,9 @@ model Application {
   message         String?
   leaseId         Int?              @unique
 
-  property Property @relation(fields: [propertyId], references: [id])
-  tenant   Tenant   @relation(fields: [tenantCognitoId], references: [cognitoId])
-  lease    Lease?   @relation(fields: [leaseId], references: [id])
+  property    Property     @relation(fields: [propertyId], references: [id])
+  tenant      Tenant       @relation(fields: [tenantCognitoId], references: [cognitoId])
+  lease       Lease?       @relation(fields: [leaseId], references: [id])
 }
 
 model Lease {

@@ -235,14 +235,12 @@ const Residence = () => {
     error: propertyError,
   } = useGetPropertyQuery(Number(id));
 
-  const { data: leases, isLoading: leasesLoading } = useGetLeasesQuery(
-    parseInt(authUser?.cognitoInfo?.userId || "0"),
-    { skip: !authUser?.cognitoInfo?.userId }
-  );
-  const { data: payments, isLoading: paymentsLoading } = useGetPaymentsQuery(
-    leases?.[0]?.id || 0,
-    { skip: !leases?.[0]?.id }
-  );
+  const { data: leases, isLoading: leasesLoading } = useGetLeasesQuery(undefined, {
+    skip: !authUser?.cognitoInfo?.userId,
+  });
+  const { data: payments, isLoading: paymentsLoading } = useGetPaymentsQuery(leases?.[0]?.id || 0, {
+    skip: !leases?.[0]?.id
+  });
 
   if (propertyLoading || leasesLoading || paymentsLoading) return <Loading />;
   if (!property || propertyError) return <div>Error loading property</div>;

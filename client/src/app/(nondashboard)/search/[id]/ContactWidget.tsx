@@ -1,12 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { useGetAuthUserQuery } from "@/state/api";
-import { Phone } from "lucide-react";
+import { Phone, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-const ContactWidget = ({ onOpenModal }: ContactWidgetProps) => {
+interface ContactWidgetProps {
+  onOpenModal: () => void;
+  phoneNumber?: string;
+}
+
+const ContactWidget = ({ onOpenModal, phoneNumber }: ContactWidgetProps) => {
   const { data: authUser } = useGetAuthUserQuery();
   const router = useRouter();
+
+  // Format phone number for WhatsApp (remove spaces, dashes, etc.)
+  const formattedPhone = phoneNumber ? phoneNumber.replace(/[\s-()]/g, '') : '+27123456789';
 
   const handleButtonClick = () => {
     if (authUser) {
@@ -26,10 +34,31 @@ const ContactWidget = ({ onOpenModal }: ContactWidgetProps) => {
         <div>
           <p>Contact This Property</p>
           <div className="text-lg font-bold text-primary-800">
-            (424) 340-5574
+            {phoneNumber || 'R+27 123 456 7890'}
           </div>
         </div>
       </div>
+      
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <a 
+          href={`https://wa.me/${formattedPhone}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <MessageCircle size={18} />
+          <span>WhatsApp</span>
+        </a>
+        
+        <a 
+          href={`tel:${formattedPhone}`}
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Phone size={18} />
+          <span>Call</span>
+        </a>
+      </div>
+      
       <Button
         className="w-full bg-primary-700 text-white hover:bg-primary-600"
         onClick={handleButtonClick}

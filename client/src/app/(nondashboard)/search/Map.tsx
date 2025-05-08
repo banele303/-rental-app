@@ -42,11 +42,11 @@ const Map = () => {
     return () => map.remove();
   }, [isLoading, isError, properties, filters.coordinates]);
 
-  if (isLoading) return <>Loading...</>;
+  if (isLoading) return <>Loading... here</>;
   if (isError || !properties) return <div>Failed to fetch properties</div>;
 
   return (
-    <div className="hidden md:block md:basis-7/12 grow relative rounded-xl">
+    <div className="hidden pt-5 md:block md:basis-7/12 grow relative rounded-xl">
       <div
         className="map-container rounded-xl"
         ref={mapContainerRef}
@@ -73,7 +73,7 @@ const createPropertyMarker = (property: Property, map: mapboxgl.Map) => {
           <div>
             <a href="/search/${property.id}" target="_blank" class="marker-popup-title">${property.name}</a>
             <p class="marker-popup-price">
-              $${property.pricePerMonth}
+              R${property.pricePerMonth}
               <span class="marker-popup-price-unit"> / month</span>
             </p>
           </div>

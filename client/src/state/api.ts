@@ -39,32 +39,14 @@ export const api = createApi({
     timeout: 60000, // Increase timeout to 60 seconds
     prepareHeaders: async (headers) => {
       try {
-        console.log("Fetching auth session...");
         const session = await fetchAuthSession();
-        
-        // Debug log to check session structure
-        console.log("Auth session result:", {
-          hasSession: !!session,
-          hasTokens: !!session.tokens,
-          hasIdToken: !!session.tokens?.idToken
-        });
-        
         const idToken = session.tokens?.idToken?.toString();
         if (idToken) {
-          // Log token info (first/last few chars only for security)
-          const tokenPreview = idToken.substring(0, 10) + '...' + idToken.substring(idToken.length - 5);
-          console.log(`Token acquired successfully: ${tokenPreview}`);
-          
           headers.set("Authorization", `Bearer ${idToken}`);
-          headers.set("x-api-key", process.env.NEXT_PUBLIC_API_KEY || ''); // Add API key if used
-        } else {
-          console.warn("No valid token found in session");
         }
       } catch (error) {
-        // Improved error logging
-        console.error("Authentication error:", error);
-        // Toast notification can be added here if needed
-        // toast.error("Authentication error. Please log in again.");
+        // Silently handle auth errors - this allows non-authenticated users to access public endpoints
+        console.log("User not authenticated, continuing as guest");
       }
       return headers;
     },
@@ -84,105 +66,49 @@ export const api = createApi({
       let retries = 0;
       let lastError;
       
-      // Handle FormData specially - we need to capture the form data entries to recreate it on retries
-      let formDataEntries = null;
-      let originalBodyIsFormData = false;
-      
-      // If we have FormData in the body, store its entries for recreating on retries
-      if (init?.body instanceof FormData) {
-        originalBodyIsFormData = true;
-        // Store form data entries for later recreation
-        formDataEntries = [];
-        for (const pair of init.body.entries()) {
-          formDataEntries.push(pair);
-        }
-      }
-      
-      // Store original request details
-      const originalInput = input instanceof Request ? 
-        { 
-          url: input.url, 
-          method: input.method, 
-          headers: input.headers,
-          // Don't store the body here, we'll handle it separately with formDataEntries 
-        } : 
-        input;
-      
       while (retries < maxRetries) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
           
-          const currentInit = {...init};
-          
-          // If we need to recreate FormData
-          if (retries > 0 && originalBodyIsFormData && formDataEntries) {
-            const newFormData = new FormData();
-            for (const [key, value] of formDataEntries) {
-              newFormData.append(key, value);
-            }
-            currentInit.body = newFormData;
-          }
-          
-          // Create a fresh request for each attempt
-          let currentInput;
-          if (retries === 0 && input instanceof Request) {
-            // Use the original Request object only on the first try
-            currentInput = input;
-            // No need to modify currentInit as we're using the original request
-          } else {
-            // On retries, create a new request
-            if (typeof originalInput === 'string') {
-              currentInput = originalInput;
-            } else {
-              // Create a new Request with the recreated body
-              currentInput = new Request(originalInput.url, {
-                method: originalInput.method,
-                headers: originalInput.headers,
-                // Body is now in currentInit
-              });
-            }
-          }
-          
-          const response = await fetch(currentInput, {
-            ...currentInit,
+          const response = await fetch(input, {
+            ...init,
             signal: controller.signal
           });
           
           clearTimeout(timeoutId);
-
           
           // Clone the response before reading it
           const clonedResponse = response.clone();
       
-          try {
-            // Try to parse as JSON first
-            const data = await response.json();
-            // Create a new Response with the JSON data
-            return new Response(JSON.stringify(data), {
-              status: response.status,
-              statusText: response.statusText,
-              headers: response.headers
-            });
-          } catch (e) {
-            // If parsing fails, handle based on status
-            if (response.status === 404 && response.url.includes('/rooms')) {
-              // Return empty array for 404s on rooms endpoint
-              return new Response(JSON.stringify([]), {
-                status: 200,
-                statusText: 'OK',
-                headers: response.headers
-              });
-            }
-            
-            // For other errors, get the text from the cloned response
-            const errorText = await clonedResponse.text();
-            throw {
-              status: response.status,
-              data: errorText,
-              originalStatus: response.status
-            };
-          }
+      try {
+        // Try to parse as JSON first
+        const data = await response.json();
+        // Create a new Response with the JSON data
+        return new Response(JSON.stringify(data), {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers
+        });
+      } catch (e) {
+        // If parsing fails, handle based on status
+        if (response.status === 404 && response.url.includes('/rooms')) {
+          // Return empty array for 404s on rooms endpoint
+          return new Response(JSON.stringify([]), {
+            status: 200,
+            statusText: 'OK',
+            headers: response.headers
+          });
+        }
+        
+        // For other errors, get the text from the cloned response
+        const errorText = await clonedResponse.text();
+        throw {
+          status: response.status,
+          data: errorText,
+          originalStatus: response.status
+        };
+      }
         } catch (error) {
           lastError = error;
           retries++;
@@ -569,46 +495,16 @@ export const api = createApi({
 
     // Room related endpoints
     getRooms: build.query<Room[], number>({
-      // Use the property endpoint directly since we know it works
       query: (propertyId) => ({
-        url: `properties/${propertyId}`,
+        url: `properties/${propertyId}/rooms`,
         method: 'GET',
       }),
-      // Since we're getting a property without rooms data, we need to handle this scenario
       transformResponse: (response: any) => {
-        console.log('Property response:', response);
-        
-        // If we have a direct array response (unlikely in this case, but handling it)
-        if (Array.isArray(response)) {
-          return response;
+        if (!response || !Array.isArray(response)) {
+          console.log('Invalid rooms response:', response);
+          return [];
         }
-        
-        // If we got a property but no rooms, create a synthetic room from the property data
-        // This is a temporary solution since the API doesn't return room data directly
-        if (response && typeof response === 'object' && response.id) {
-          // Create a synthetic room based on the property data
-          const syntheticRoom = {
-            id: response.id * 1000, // Create a unique ID for the room
-            propertyId: response.id,
-            name: response.name || 'Default Room',
-            description: response.description || 'No description available',
-            pricePerMonth: response.pricePerMonth || 0,
-            securityDeposit: response.securityDeposit || 0,
-            photos: response.photos || [],
-            isAvailable: true,
-            roomType: 'PRIVATE',
-            capacity: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          
-          console.log('Created synthetic room from property:', syntheticRoom);
-          return [syntheticRoom];
-        }
-        
-        // Fallback to empty array for any other case
-        console.log('Could not parse property data, returning empty rooms array');
-        return [];
+        return response;
       },
       transformErrorResponse: (response: any) => {
         if (response?.status === 404) {
@@ -646,18 +542,12 @@ export const api = createApi({
     }),
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
-      query: ({ propertyId, body }) => {
-        // Add propertyId to the form data if it doesn't already exist
-        if (!body.has('propertyId')) {
-          body.append('propertyId', propertyId.toString());
-        }
-        return {
-          // Use the correct rooms endpoint
-          url: `/rooms`,
-          method: 'POST',
-          body,
-        };
-      },
+      query: ({ propertyId, body }) => ({
+        // Use the property endpoint which we know exists, with a different path
+        url: `/properties/${propertyId}/create-room`,
+        method: 'POST',
+        body,
+      }),
       transformResponse: (response: any) => {
         // The server returns the room directly
         return response;
@@ -667,10 +557,7 @@ export const api = createApi({
         
         // Handle different error cases
         if (response.status === 404) {
-          // Don't mask 404 errors when creating rooms - make sure they propagate correctly
-          // as this indicates the API endpoint doesn't exist
-          console.error('API endpoint not found - this is likely a deployment configuration issue');
-          return response; // Return the original error to ensure it's properly handled as a failure
+          return { message: "Property not found" };
         }
         if (response.status === 400) {
           return { 
@@ -797,7 +684,7 @@ export const api = createApi({
 
     getPropertyLeases: build.query<Lease[], number>({
       query: (propertyId) => ({
-        url: `leases?propertyId=${propertyId}`,
+        url: `properties/${propertyId}/leases`,
         method: 'GET',
       }),
       transformErrorResponse: (response: any) => {

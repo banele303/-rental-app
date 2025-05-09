@@ -16,7 +16,8 @@ const Listings = () => {
   const { data: tenant, isError: tenantError } = useGetTenantQuery(
     authUser?.cognitoInfo?.userId || "",
     {
-      skip: !authUser?.cognitoInfo?.userId,
+      // Skip if no user ID or if user is a manager
+      skip: !authUser?.cognitoInfo?.userId || authUser?.userRole === "manager",
       // Don't refetch on focus to prevent unnecessary error toasts
       refetchOnFocus: false,
       // Don't refetch on reconnect to prevent unnecessary error toasts

@@ -31,6 +31,13 @@ export const authMiddleware = (allowedRoles: string[]) => {
       // we just need to decode and extract the needed claims
       const decoded = jwt.decode(token) as DecodedToken;
       
+      // Log token info for debugging (safely)
+      console.log("Received token info:", {
+        tokenLength: token.length,
+        hasDecodedData: !!decoded,
+        decodedFields: decoded ? Object.keys(decoded) : []
+      });
+      
       if (!decoded || !decoded.sub) {
         console.error("Invalid token structure");
         res.status(401).json({ message: "Invalid token structure" });

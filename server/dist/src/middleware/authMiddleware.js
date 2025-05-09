@@ -17,6 +17,12 @@ const authMiddleware = (allowedRoles) => {
             // For Cognito tokens, we don't need to verify with a secret,
             // we just need to decode and extract the needed claims
             const decoded = jsonwebtoken_1.default.decode(token);
+            // Log token info for debugging (safely)
+            console.log("Received token info:", {
+                tokenLength: token.length,
+                hasDecodedData: !!decoded,
+                decodedFields: decoded ? Object.keys(decoded) : []
+            });
             if (!decoded || !decoded.sub) {
                 console.error("Invalid token structure");
                 res.status(401).json({ message: "Invalid token structure" });

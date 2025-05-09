@@ -39,14 +39,32 @@ export const api = createApi({
     timeout: 60000, // Increase timeout to 60 seconds
     prepareHeaders: async (headers) => {
       try {
+        console.log("Fetching auth session...");
         const session = await fetchAuthSession();
+        
+        // Debug log to check session structure
+        console.log("Auth session result:", {
+          hasSession: !!session,
+          hasTokens: !!session.tokens,
+          hasIdToken: !!session.tokens?.idToken
+        });
+        
         const idToken = session.tokens?.idToken?.toString();
         if (idToken) {
+          // Log token info (first/last few chars only for security)
+          const tokenPreview = idToken.substring(0, 10) + '...' + idToken.substring(idToken.length - 5);
+          console.log(`Token acquired successfully: ${tokenPreview}`);
+          
           headers.set("Authorization", `Bearer ${idToken}`);
+          headers.set("x-api-key", process.env.NEXT_PUBLIC_API_KEY || ''); // Add API key if used
+        } else {
+          console.warn("No valid token found in session");
         }
       } catch (error) {
-        // Silently handle auth errors - this allows non-authenticated users to access public endpoints
-        console.log("User not authenticated, continuing as guest");
+        // Improved error logging
+        console.error("Authentication error:", error);
+        // Toast notification can be added here if needed
+        // toast.error("Authentication error. Please log in again.");
       }
       return headers;
     },

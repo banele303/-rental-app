@@ -543,7 +543,8 @@ export const api = createApi({
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
       query: ({ propertyId, body }) => ({
-        url: `/rooms`,
+        // Use the property endpoint which we know exists, with a different path
+        url: `/properties/${propertyId}/create-room`,
         method: 'POST',
         body,
       }),

@@ -41,4 +41,24 @@ router.delete(
   deleteProperty
 );
 
+// Special endpoint for room creation to work around API Gateway limitations
+import { createRoom } from '../controllers/roomControllers';
+import multer from 'multer';
+
+// Setup multer for room photos
+const roomStorage = multer.memoryStorage();
+const roomUpload = multer({ 
+  storage: roomStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  } 
+});
+
+router.post(
+  "/:propertyId/create-room",
+  authMiddleware(["admin", "manager"]),
+  roomUpload.array('photos', 10),
+  createRoom
+);
+
 export default router;

@@ -40,9 +40,11 @@ app.get("/", (req, res) => {
     res.send("This is home route");
 });
 app.use("/applications", applicationRoutes_1.default);
+// Mount properties routes first
 app.use("/properties", propertyRoutes_1.default);
-app.use("/rooms", roomRoutes_1.default);
-app.use("/leases", leaseRoutes_1.default);
+// Nest room and lease routes under properties path
+app.use("/properties/:propertyId/rooms", roomRoutes_1.default);
+app.use("/properties/:propertyId/leases", leaseRoutes_1.default);
 app.use("/tenants", (0, authMiddleware_1.authMiddleware)(["tenant"]), tenantRoutes_1.default);
 app.use("/managers", (0, authMiddleware_1.authMiddleware)(["manager"]), managerRoutes_1.default);
 console.log("✅ All routes configured");

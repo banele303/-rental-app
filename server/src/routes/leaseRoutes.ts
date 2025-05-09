@@ -1,10 +1,12 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { getLeasePayments, getLeases } from "../controllers/leaseControllers";
+import { getLeasePayments, getLeases, getPropertyLeases } from "../controllers/leaseControllers";
 
 const router = express.Router();
 
-router.get("/", authMiddleware(["manager", "tenant"]), getLeases);
+// Property ID is already available from the parent route (/properties/:propertyId/leases)
+// Use getPropertyLeases instead of getLeases to properly handle property-specific leases
+router.get("/", authMiddleware(["manager", "tenant"]), getPropertyLeases);
 router.get(
   "/:id/payments",
   authMiddleware(["manager", "tenant"]),

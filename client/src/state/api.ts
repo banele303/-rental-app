@@ -66,49 +66,105 @@ export const api = createApi({
       let retries = 0;
       let lastError;
       
+      // Handle FormData specially - we need to capture the form data entries to recreate it on retries
+      let formDataEntries = null;
+      let originalBodyIsFormData = false;
+      
+      // If we have FormData in the body, store its entries for recreating on retries
+      if (init?.body instanceof FormData) {
+        originalBodyIsFormData = true;
+        // Store form data entries for later recreation
+        formDataEntries = [];
+        for (const pair of init.body.entries()) {
+          formDataEntries.push(pair);
+        }
+      }
+      
+      // Store original request details
+      const originalInput = input instanceof Request ? 
+        { 
+          url: input.url, 
+          method: input.method, 
+          headers: input.headers,
+          // Don't store the body here, we'll handle it separately with formDataEntries 
+        } : 
+        input;
+      
       while (retries < maxRetries) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
           
-          const response = await fetch(input, {
-            ...init,
+          let currentInit = {...init};
+          
+          // If we need to recreate FormData
+          if (retries > 0 && originalBodyIsFormData && formDataEntries) {
+            const newFormData = new FormData();
+            for (const [key, value] of formDataEntries) {
+              newFormData.append(key, value);
+            }
+            currentInit.body = newFormData;
+          }
+          
+          // Create a fresh request for each attempt
+          let currentInput;
+          if (retries === 0 && input instanceof Request) {
+            // Use the original Request object only on the first try
+            currentInput = input;
+            // No need to modify currentInit as we're using the original request
+          } else {
+            // On retries, create a new request
+            if (typeof originalInput === 'string') {
+              currentInput = originalInput;
+            } else {
+              // Create a new Request with the recreated body
+              currentInput = new Request(originalInput.url, {
+                method: originalInput.method,
+                headers: originalInput.headers,
+                // Body is now in currentInit
+              });
+            }
+          }
+          
+          const response = await fetch(currentInput, {
+            ...currentInit,
             signal: controller.signal
           });
           
           clearTimeout(timeoutId);
+
           
           // Clone the response before reading it
           const clonedResponse = response.clone();
       
-      try {
-        // Try to parse as JSON first
-        const data = await response.json();
-        // Create a new Response with the JSON data
-        return new Response(JSON.stringify(data), {
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers
-        });
-      } catch (e) {
-        // If parsing fails, handle based on status
-        if (response.status === 404 && response.url.includes('/rooms')) {
-          // Return empty array for 404s on rooms endpoint
-          return new Response(JSON.stringify([]), {
-            status: 200,
-            statusText: 'OK',
-            headers: response.headers
-          });
-        }
-        
-        // For other errors, get the text from the cloned response
-        const errorText = await clonedResponse.text();
-        throw {
-          status: response.status,
-          data: errorText,
-          originalStatus: response.status
-        };
-      }
+          try {
+            // Try to parse as JSON first
+            const data = await response.json();
+            // Create a new Response with the JSON data
+            return new Response(JSON.stringify(data), {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers
+            });
+          } catch (e) {
+            // If parsing fails, handle based on status
+            if (response.status === 404 && response.url.includes('/rooms')) {
+              // Return empty array for 404s on rooms endpoint
+              return new Response(JSON.stringify([]), {
+                status: 200,
+                statusText: 'OK',
+                headers: response.headers
+              });
+            }
+            
+            // For other errors, get the text from the cloned response
+            const errorText = await clonedResponse.text();
+            throw {
+              status: response.status,
+              data: errorText,
+              originalStatus: response.status
+            };
+          }
         } catch (error) {
           lastError = error;
           retries++;
@@ -543,8 +599,8 @@ export const api = createApi({
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
       query: ({ propertyId, body }) => ({
-        // Use the property endpoint which we know exists, with a different path
-        url: `/properties/${propertyId}/create-room`,
+        // Use the standard rooms endpoint path for better compatibility
+        url: `/properties/${propertyId}/rooms`,
         method: 'POST',
         body,
       }),

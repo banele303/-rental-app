@@ -8,7 +8,7 @@ import {
 } from "../controllers/propertyControllers";
 import { getRooms } from "../controllers/roomControllers";
 import { getPropertyLeases } from "../controllers/leaseControllers";
-import multer from "multer";
+
 import { authMiddleware } from "../middleware/authMiddleware";
 
 const storage = multer.memoryStorage();

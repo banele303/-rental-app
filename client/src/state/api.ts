@@ -552,7 +552,7 @@ export const api = createApi({
     // Room related endpoints
     getRooms: build.query<Room[], number>({
       query: (propertyId) => ({
-        url: `properties/${propertyId}/rooms`,
+        url: `rooms?propertyId=${propertyId}`,
         method: 'GET',
       }),
       transformResponse: (response: any) => {
@@ -598,12 +598,16 @@ export const api = createApi({
     }),
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
-      query: ({ propertyId, body }) => ({
-        // Use the custom endpoint which we know exists in the deployed API
-        url: `/properties/${propertyId}/create-room`,
-        method: 'POST',
-        body,
-      }),
+      query: ({ propertyId, body }) => {
+        // Add propertyId to the form data
+        body.append('propertyId', propertyId.toString());
+        return {
+          // Use non-nested route to avoid API Gateway configuration issues
+          url: `/rooms`,
+          method: 'POST',
+          body,
+        };
+      },
       transformResponse: (response: any) => {
         // The server returns the room directly
         return response;
@@ -743,7 +747,7 @@ export const api = createApi({
 
     getPropertyLeases: build.query<Lease[], number>({
       query: (propertyId) => ({
-        url: `properties/${propertyId}/leases`,
+        url: `leases?propertyId=${propertyId}`,
         method: 'GET',
       }),
       transformErrorResponse: (response: any) => {

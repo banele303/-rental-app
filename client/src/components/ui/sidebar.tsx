@@ -29,9 +29,9 @@ import {
 const SIDEBAR_CONFIG = {
   COOKIE_NAME: "sidebar_state",
   COOKIE_MAX_AGE: 60 * 60 * 24 * 7, // 7 days
-  WIDTH: "16rem",
+  WIDTH: "18rem",
   WIDTH_MOBILE: "18rem",
-  WIDTH_ICON: "3.5rem",
+  WIDTH_ICON: "4rem",
   KEYBOARD_SHORTCUT: "b",
 }
 
@@ -148,7 +148,7 @@ const SidebarProvider: React.FC<SidebarProviderProps> = ({
             ...style,
           } as React.CSSProperties}
           className={cn(
-            "group/sidebar-wrapper flex min-h-svh w-full bg-gradient-to-b from-black to-zinc-950",
+            "group/sidebar-wrapper flex min-h-svh w-full bg-white dark:bg-slate-900",
             className
           )}
           {...props}
@@ -182,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         data-slot="sidebar"
         className={cn(
-          "flex h-full w-(--sidebar-width) flex-col bg-black/50 text-zinc-100 backdrop-blur-lg",
+          "flex h-full w-(--sidebar-width) flex-col bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-md transition-all duration-300 backdrop-blur-lg",
           className
         )}
         {...props}
@@ -198,18 +198,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         <SheetContent
           data-sidebar="sidebar"
           data-slot="sidebar"
-          data-mobile="true"
-          className="w-(--sidebar-width) bg-black/90 p-0 text-zinc-100 backdrop-blur-md [&>button]:hidden"
+          side={side}
+          className="w-(--sidebar-width) bg-white dark:bg-slate-900 p-0 text-slate-800 dark:text-slate-100 shadow-lg [&>button]:hidden"
           style={{
             "--sidebar-width": SIDEBAR_CONFIG.WIDTH_MOBILE,
           } as React.CSSProperties}
-          side={side}
         >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+          <SheetHeader className="p-4 border-b border-slate-200 dark:border-slate-800">
+            <SheetTitle className="text-slate-900 dark:text-white font-medium">Navigation</SheetTitle>
+            <SheetDescription className="text-slate-500 dark:text-slate-400">Access your dashboard sections.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div className="p-4">{children}</div>
         </SheetContent>
       </Sheet>
     )
@@ -217,23 +216,17 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className="group peer hidden text-zinc-100 md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
       data-slot="sidebar"
+      className="md:flex hidden"
     >
       {/* Sidebar gap handler */}
       <div
         data-slot="sidebar-gap"
         className={cn(
           "relative w-(--sidebar-width) bg-transparent transition-[width] duration-300 ease-in-out",
-          "group-data-[collapsible=offcanvas]:w-0",
-          "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+          variant === "inset"
+            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"  
+            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
         )}
       />
       <div
@@ -241,19 +234,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-all duration-300 ease-in-out md:flex",
           side === "left"
-            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l group-data-[side=left]:border-zinc-800 group-data-[side=right]:border-zinc-800",
-          className
         )}
-        {...props}
       >
         <div
-          data-sidebar="sidebar"
-          data-slot="sidebar-inner"
-          className="flex h-full w-full flex-col bg-black/50 backdrop-blur-md group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-zinc-800 group-data-[variant=floating]:shadow-lg"
+          data-slot="sidebar"
+          className={cn(
+            "flex h-full w-(--sidebar-width) flex-col bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-md transition-all duration-300 backdrop-blur-lg",
+            "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+            className
+          )}
+          {...props}
         >
           {children}
         </div>
@@ -263,28 +255,27 @@ const Sidebar: React.FC<SidebarProps> = ({
 }
 
 // Trigger button
-const SidebarTrigger: React.FC<React.ComponentProps<typeof Button>> = ({
+const SidebarTrigger: React.FC<React.ComponentProps<"button">> = ({
   className,
   onClick,
   ...props
 }) => {
   const { toggleSidebar } = useSidebar()
-
+  
   return (
     <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
+      type="button"
       variant="ghost"
       size="icon"
-      className={cn("size-8 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100", className)}
-      onClick={(event) => {
-        onClick?.(event)
+      onClick={(e) => {
         toggleSidebar()
+        onClick?.(e)
       }}
+      className={cn("text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200", className)}
+      aria-label="Toggle sidebar"
       {...props}
     >
       <PanelLeftIcon className="size-5" />
-      <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
 }
@@ -302,10 +293,10 @@ const SidebarRail: React.FC<React.ComponentProps<"button">> = ({ className, ...p
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-in-out after:absolute after:inset-y-0 after:left-1/2 after:w-[1px] after:bg-zinc-800 after:transition-opacity hover:after:bg-zinc-700 hover:after:opacity-100 sm:flex",
+        "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-in-out after:absolute after:inset-y-0 after:left-1/2 after:w-[1px] after:bg-slate-200 dark:after:bg-slate-700 after:transition-opacity hover:after:bg-slate-300 dark:hover:after:bg-slate-600 hover:after:opacity-100 sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
-        "group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full hover:group-data-[collapsible=offcanvas]:bg-zinc-900/30",
+        "group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full hover:group-data-[collapsible=offcanvas]:bg-slate-100 dark:hover:group-data-[collapsible=offcanvas]:bg-slate-800/30",
         "[[data-side=left][data-collapsible=offcanvas]_&]:-right-2",
         "[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
         className
@@ -321,7 +312,7 @@ const SidebarInset: React.FC<React.ComponentProps<"main">> = ({ className, ...pr
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-zinc-950",
+        "relative flex w-full flex-1 flex-col bg-slate-950",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-lg md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className
       )}
@@ -337,7 +328,7 @@ const SidebarInput: React.FC<React.ComponentProps<typeof Input>> = ({ className,
       data-slot="sidebar-input"
       data-sidebar="input"
       className={cn(
-        "h-9 w-full bg-zinc-900/60 text-zinc-300 placeholder:text-zinc-500 shadow-none ring-1 ring-zinc-800 focus-visible:ring-zinc-600",
+        "h-9 w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 placeholder:text-slate-500 dark:placeholder:text-slate-400 shadow-none ring-1 ring-slate-200 dark:ring-slate-700 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-600",
         className
       )}
       {...props}
@@ -348,10 +339,10 @@ const SidebarInput: React.FC<React.ComponentProps<typeof Input>> = ({ className,
 // Header component
 const SidebarHeader: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
   return (
-    <div
-      data-slot="sidebar-header"
-      data-sidebar="header"
-      className={cn("flex flex-col gap-3 p-3", className)}
+    <section
+      data-slot="sidebar-group"
+      data-sidebar="group"
+      className={cn("flex flex-col py-2 px-3", className)}
       {...props}
     />
   )
@@ -363,7 +354,7 @@ const SidebarFooter: React.FC<React.ComponentProps<"div">> = ({ className, ...pr
     <div
       data-slot="sidebar-footer"
       data-sidebar="footer"
-      className={cn("flex flex-col gap-3 p-3 border-t border-zinc-800", className)}
+      className={cn("flex flex-col gap-3 p-3 border-t border-slate-200 dark:border-slate-800", className)}
       {...props}
     />
   )
@@ -375,7 +366,7 @@ const SidebarSeparator: React.FC<React.ComponentProps<typeof Separator>> = ({ cl
     <Separator
       data-slot="sidebar-separator"
       data-sidebar="separator"
-      className={cn("mx-3 w-auto bg-zinc-800", className)}
+      className={cn("my-4 bg-slate-200 dark:bg-slate-800", className)}
       {...props}
     />
   )
@@ -384,11 +375,11 @@ const SidebarSeparator: React.FC<React.ComponentProps<typeof Separator>> = ({ cl
 // Content area
 const SidebarContent: React.FC<React.ComponentProps<"div">> = ({ className, ...props }) => {
   return (
-    <div
+    <section
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-zinc-700 group-data-[collapsible=icon]:overflow-hidden",
+        "flex-1 overflow-auto overscroll-contain py-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-track]:bg-slate-100 dark:[&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar]:w-1.5",
         className
       )}
       {...props}
@@ -418,15 +409,14 @@ const SidebarGroupLabel: React.FC<SidebarGroupLabelProps> = ({
   asChild = false,
   ...props
 }) => {
-  const Comp = asChild ? Slot : "div"
-
+  const Comp = asChild ? Slot : "h3"
+  
   return (
     <Comp
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center px-2 text-xs font-medium uppercase tracking-wider text-zinc-400 outline-none ring-zinc-700 transition-[margin,opacity] duration-200 ease-in-out focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-        "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
+        "mb-2 mt-4 px-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-data-[collapsible=icon]:sr-only",
         className
       )}
       {...props}
@@ -451,7 +441,7 @@ const SidebarGroupAction: React.FC<SidebarGroupActionProps> = ({
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       className={cn(
-        "absolute right-3 top-3.5 flex aspect-square w-6 items-center justify-center rounded-md bg-zinc-800/50 p-0 text-zinc-400 outline-none ring-zinc-700 transition-all hover:bg-zinc-800 hover:text-zinc-100 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute right-3 top-3.5 flex aspect-square w-6 items-center justify-center rounded-md bg-slate-200 dark:bg-slate-700 p-0 text-slate-500 dark:text-slate-400 outline-none ring-slate-200 dark:ring-slate-700 transition-all hover:bg-slate-300 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white focus-visible:ring-slate-300 dark:focus-visible:ring-slate-600 [&>svg]:size-4 [&>svg]:shrink-0",
         "after:absolute after:-inset-2 md:after:hidden", // Larger hit area on mobile
         "group-data-[collapsible=icon]:hidden",
         className
@@ -499,15 +489,21 @@ const SidebarMenuItem: React.FC<React.ComponentProps<"li">> = ({ className, ...p
 
 // Menu button variants
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-zinc-700 transition-all hover:bg-zinc-800/60 hover:text-zinc-100 focus-visible:ring-2 active:bg-zinc-800 active:text-zinc-100 disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-zinc-800 data-[active=true]:text-zinc-100 data-[state=open]:bg-zinc-800/60 data-[state=open]:text-zinc-100 group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
+  [
+    "peer/menu-button group/menu-button relative flex w-full min-w-0 select-none items-center gap-2 overflow-hidden rounded-md px-3 outline-none ring-1 ring-transparent transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  ],
   {
     variants: {
       variant: {
-        default: "text-zinc-300",
-        outline: "bg-zinc-900/30 ring-1 ring-zinc-800 hover:ring-zinc-700",
+        default:
+          "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white active:bg-slate-200 dark:active:bg-slate-800 active:text-slate-900 dark:active:text-white focus-visible:ring-slate-300 dark:focus-visible:ring-slate-600 data-[active=true]:bg-blue-50 dark:data-[active=true]:bg-blue-950/30 data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300 data-[active=true]:[&>svg]:text-blue-600 dark:data-[active=true]:[&>svg]:text-blue-400",
+        outline:
+          "border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white active:bg-slate-100 dark:active:bg-slate-800 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-600 data-[active=true]:border-blue-200 dark:data-[active=true]:border-blue-900 data-[active=true]:bg-blue-50 dark:data-[active=true]:bg-blue-950/30 data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300 data-[active=true]:[&>svg]:text-blue-600 dark:data-[active=true]:[&>svg]:text-blue-400",
+        ghost:
+          "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white active:bg-slate-200 dark:active:bg-slate-800 focus-visible:ring-slate-300 dark:focus-visible:ring-slate-600 data-[active=true]:bg-blue-50 dark:data-[active=true]:bg-blue-950/30 data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300 data-[active=true]:[&>svg]:text-blue-600 dark:data-[active=true]:[&>svg]:text-blue-400",
       },
       size: {
-        default: "h-9",
+        default: "h-10",
         sm: "h-8 text-xs",
         lg: "h-12 group-data-[collapsible=icon]:!p-0",
       },
@@ -647,17 +643,17 @@ const SidebarMenuSkeleton: React.FC<SidebarMenuSkeletonProps> = ({
     <div
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
-      className={cn("flex h-9 items-center gap-3 rounded-md px-2", className)}
+      className={cn("flex h-10 items-center gap-3 rounded-md px-3", className)}
       {...props}
     >
       {showIcon && (
         <Skeleton
-          className="size-5 rounded-md bg-zinc-800/80"
+          className="size-5 rounded-md bg-slate-200 dark:bg-slate-700/80 animate-pulse"
           data-sidebar="menu-skeleton-icon"
         />
       )}
       <Skeleton
-        className="h-4 flex-1 bg-zinc-800/80"
+        className="h-4 flex-1 bg-slate-200 dark:bg-slate-700/80 animate-pulse"
         data-sidebar="menu-skeleton-text"
         style={{
           maxWidth: width,
@@ -674,7 +670,7 @@ const SidebarMenuSub: React.FC<React.ComponentProps<"ul">> = ({ className, ...pr
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-zinc-800 px-2.5 py-0.5",
+        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-slate-200 dark:border-slate-700 px-2.5 py-0.5",
         "group-data-[collapsible=icon]:hidden",
         className
       )}
@@ -717,8 +713,8 @@ const SidebarMenuSubButton: React.FC<SidebarMenuSubButtonProps> = ({
       data-size={size}
       data-active={isActive}
       className={cn(
-        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-zinc-400 outline-none ring-zinc-700 transition-colors hover:bg-zinc-800/40 hover:text-zinc-100 active:bg-zinc-800/60 active:text-zinc-100 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-zinc-500",
-        "data-[active=true]:bg-zinc-800/60 data-[active=true]:font-medium data-[active=true]:text-zinc-100 data-[active=true]:[&>svg]:text-zinc-300",
+        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-slate-600 dark:text-slate-400 outline-none ring-slate-300 dark:ring-slate-700 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 active:bg-slate-200 dark:active:bg-slate-800/60 active:text-slate-900 dark:active:text-slate-100 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-slate-500 dark:[&>svg]:text-slate-500",
+        "data-[active=true]:bg-blue-50 dark:data-[active=true]:bg-blue-950/20 data-[active=true]:font-medium data-[active=true]:text-blue-700 dark:data-[active=true]:text-blue-300 data-[active=true]:[&>svg]:text-blue-600 dark:data-[active=true]:[&>svg]:text-blue-400",
         size === "sm" && "h-6 text-xs",
         size === "md" && "h-7 text-sm",
         "group-data-[collapsible=icon]:hidden",

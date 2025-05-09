@@ -25,6 +25,7 @@ import { RoomFormData as ModalRoomFormDataBase, roomSchema as modalRoomSchema } 
 type ModalRoomFormData = ModalRoomFormDataBase & { id?: number };
 import { AmenityEnum as ModalAmenityEnum, RoomTypeEnum as ModalRoomTypeEnum } from '@/lib/constants';
 import { CreateFormField as ModalCreateFormField } from '@/components/CreateFormField';
+import { cn } from '@/lib/utils';
 import { DatePickerDemo as UIDatePicker } from '@/components/ui/date-picker';
 import { useCreateRoomMutation as useCreateRoomHook, useUpdateRoomMutation as useUpdateRoomHook } from '@/state/api'; // Use actual hooks
 
@@ -39,6 +40,12 @@ interface RoomFormModalProps {
   initialRoomData: Partial<ModalRoomFormData> | null;
   onSaveSuccess: (savedRoom: any) => void;
 }
+
+// Custom styles for dropdown items to ensure text is white
+const dropdownItemStyles = "text-white hover:bg-gray-700/70 focus:bg-gray-700/70 focus:text-white";
+const inputStyles = "text-white bg-gray-800 border-gray-700 focus:border-primary";
+const labelStyles = "text-white font-medium";
+const checkboxLabelStyles = "text-white font-normal";
 
 export function PropertyEditPageRoomFormModal({
   isOpen,
@@ -166,11 +173,11 @@ export function PropertyEditPageRoomFormModal({
         </UIDialogHeader>
         {/* Provide the correct type for the Form component */}
         <Form {...({ control: roomControl, handleSubmit: handleRoomSubmit, reset: resetRoomForm, watch: watchRoomForm, setValue: setRoomFormValue } as any)}>
-          <form onSubmit={handleRoomSubmit(onRoomFormSubmit)} className="space-y-5 mt-4">
+          <form onSubmit={handleRoomSubmit(onRoomFormSubmit)} className="space-y-4 text-white mt-4">
             <ModalCreateFormField name="name" label="Room Name / Number" placeholder="e.g., Master Bedroom, Unit A-102" />
             <ModalCreateFormField name="description" label="Room Description (Optional)" type="textarea" placeholder="Specific details about this room" />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-white">
               <ModalCreateFormField name="roomType" label="Room Type" type="select" options={Object.values(ModalRoomTypeEnum).map(rt => ({ value: rt, label: rt }))} />
               <ModalCreateFormField name="capacity" label="Capacity (Persons)" type="number" min={1} placeholder="e.g., 2" />
             </div>
@@ -182,17 +189,17 @@ export function PropertyEditPageRoomFormModal({
             <div className="space-y-3 border-t border-border dark:border-gray-700 pt-4 mt-4">
                 <UILabel className="text-base font-semibold dark:text-gray-100">Room Photos</UILabel>
                 <div>
-                    <UILabel htmlFor={`roomPhotosFile-${initialRoomData?.id || 'new'}`} className="text-sm font-medium text-foreground dark:text-gray-200">Upload New Photos</UILabel>
+                    <UILabel htmlFor={`roomPhotosFile-${initialRoomData?.id || 'new'}`} className="text-sm font-medium text-white">Upload New Photos</UILabel>
                     <UIInput id={`roomPhotosFile-${initialRoomData?.id || 'new'}`} type="file" multiple onChange={handleFileChangeModal} className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 file:text-primary dark:file:text-primary-foreground"/>
                     <div className="mt-2 flex items-center space-x-2">
                         <UICheckbox id={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} checked={replacePhotosFlagModal} onCheckedChange={(checked) => setReplacePhotosFlagModal(Boolean(checked))} className="dark:border-gray-600 dark:data-[state=checked]:bg-primary" />
-                        <UILabel htmlFor={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} className="text-xs font-normal text-foreground dark:text-gray-300">Replace all existing photos for this room</UILabel>
+                        <UILabel htmlFor={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} className="text-xs font-normal text-white">Replace all existing photos for this room</UILabel>
                     </div>
                 </div>
 
                 {newPhotoFilesModal && Array.from(newPhotoFilesModal).length > 0 && (
                     <div>
-                        <p className="text-xs text-muted-foreground dark:text-gray-400 mb-1">New photos preview:</p>
+                        <p className="text-xs text-white mb-1">New photos preview:</p>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                             {Array.from(newPhotoFilesModal).map((file, index) => (
                                 <div key={index} className="relative aspect-square w-20 h-20 bg-muted dark:bg-gray-700 rounded-md overflow-hidden">
@@ -205,7 +212,7 @@ export function PropertyEditPageRoomFormModal({
 
                 {currentPhotosInModal.length > 0 && (
                     <div className="mt-2">
-                        <p className="text-xs text-muted-foreground dark:text-gray-400 mb-1">Current photos ({currentPhotosInModal.length}):</p>
+                        <p className="text-xs text-white mb-1">Current photos ({currentPhotosInModal.length}):</p>
                         <div className="grid grid-cols-2 gap-4">
                             {currentPhotosInModal.map((url) => (
                                 <div key={url} className="relative group aspect-square w-20 h-20">
@@ -230,10 +237,10 @@ export function PropertyEditPageRoomFormModal({
 
 
             <UIDialogFooter className="pt-8">
-              <UIButton type="button" variant="outline" onClick={onClose} disabled={isLoadingAction}>
+              <UIButton type="button" variant="outline" onClick={onClose} disabled={isLoadingAction} className="border-gray-600 text-white hover:bg-gray-700 hover:text-white">
                 Cancel
               </UIButton>
-              <UIButton type="submit" disabled={isLoadingAction}>
+              <UIButton type="submit" disabled={isLoadingAction} className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
                 {isLoadingAction && <ModalLoader className="mr-2 h-4 w-4 animate-spin" />}
                 {initialRoomData?.id ? "Save Room Changes" : "Create Room"}
               </UIButton>

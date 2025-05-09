@@ -15,7 +15,8 @@ const upload = multer({
 });
 
 // Room routes
-router.get('/:propertyId/rooms', getRooms);
+// Property ID is already available from the parent route (/properties/:propertyId/rooms)
+router.get('/', getRooms);
 router.get('/:id', getRoom);
 router.post('/', authMiddleware(['admin', 'manager']), upload.array('photos', 10), createRoom);
 router.put('/:id', authMiddleware(['admin', 'manager']), upload.array('photos', 10), updateRoom);

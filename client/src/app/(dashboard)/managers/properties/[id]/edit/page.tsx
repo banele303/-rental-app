@@ -258,7 +258,7 @@ export default function EditPropertyPage() {
 
   const handleDeleteRoomFromList = async (roomId: number, roomName: string) => {
       try {
-          await deleteRoom({ id: roomId }).unwrap();
+          await deleteRoom({ propertyId: propertyIdNumber, roomId: roomId }).unwrap();
           toast.success(`Room "${roomName}" deleted successfully!`);
           refetchRooms();
       } catch (error: any) {

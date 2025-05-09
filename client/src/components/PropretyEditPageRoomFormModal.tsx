@@ -135,12 +135,16 @@ export function PropertyEditPageRoomFormModal({
       if (initialRoomData?.id) {
         // For updates, include both the room ID and property ID
         savedRoomResponse = await updateRoom({ 
-          id: Number(initialRoomData.id), 
+          propertyId: Number(propertyId),
+          roomId: Number(initialRoomData.id), 
           data: formData 
         }).unwrap();
         modalToast.success(`Room "${data.name}" updated!`);
       } else {
-        savedRoomResponse = await createRoom({ body: formData }).unwrap();
+        savedRoomResponse = await createRoom({ 
+          propertyId: Number(propertyId), 
+          body: formData 
+        }).unwrap();
         modalToast.success(`Room "${data.name}" created!`);
       }
       onSaveSuccess(savedRoomResponse);

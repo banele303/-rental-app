@@ -1,24 +1,37 @@
 version: 1
-backend:
-  phases:
-    build:
-      commands:
-        - cd server && npm ci --no-audit
-        - cd server && npm run build
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd client && npm ci --no-audit --max-attempts=5 --fetch-retries=5 --fetch-retry-factor=2
-    build:
-      commands:
-        - cd client && npm run build
-  artifacts:
-    baseDirectory: client/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - client/node_modules/**/*
-      - server/node_modules/**/*
-      - client/.next/cache/**/*
+allowCustomStacks: true
+applications:
+  - appRoot: client
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci --no-audit --max-attempts=5 --fetch-retries=5 --fetch-retry-factor=2
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
+  
+  - appRoot: server
+    backend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci --no-audit
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*

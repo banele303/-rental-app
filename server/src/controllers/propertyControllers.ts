@@ -746,18 +746,30 @@ export const updateProperty = async (
 
     // Update property data
     try {
-      // Prepare data with type handling
+      // Define a whitelist of valid property fields based on Prisma schema
+      const validPropertyFields = [
+        'name', 'description', 'pricePerMonth', 'securityDeposit', 'squareFeet',
+        'isAvailable', 'isPetsAllowed', 'isParkingIncluded', 'photoUrls',
+        'beds', 'baths', 'propertyType', 'postedDate', 'averageRating',
+        'numberOfReviews', 'amenities', 'highlights', 'applicationFee'
+      ];
+      
+      // Start with a clean update object
       const updateData: any = {
-        ...propertyData,
-        photoUrls,
+        photoUrls, // Always include processed photos
       };
-
-      // Remove any invalid fields that shouldn't be sent to Prisma
-      // 'propertyId' isn't a valid field in the Property schema
-      if ('propertyId' in updateData) {
-        console.log("Removing invalid propertyId field from property update data");
-        delete updateData.propertyId;
-      }
+      
+      // Only include fields that are in the whitelist
+      Object.keys(propertyData).forEach(key => {
+        if (validPropertyFields.includes(key)) {
+          updateData[key] = propertyData[key];
+        } else {
+          console.log(`Skipping invalid property field: ${key}`);
+        }
+      });
+      
+      // Log the sanitized update data
+      console.log("Sanitized property update data:", JSON.stringify(updateData, null, 2));
 
       // Handle array fields properly
       if (propertyData.amenities) {

@@ -647,12 +647,14 @@ export const api = createApi({
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
       query: ({ propertyId, body }) => {
-        // Add propertyId to the form data
-        body.append('propertyId', propertyId.toString());
+        // Add propertyId to the form data if it doesn't already exist
+        if (!body.has('propertyId')) {
+          body.append('propertyId', propertyId.toString());
+        }
         return {
-          // Use the property endpoint directly since we know it works
-          url: `/properties/${propertyId}`,
-          method: 'PUT',
+          // Use the correct rooms endpoint
+          url: `/rooms`,
+          method: 'POST',
           body,
         };
       },

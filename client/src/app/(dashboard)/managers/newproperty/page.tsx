@@ -241,7 +241,7 @@ const NewProperty = () => {
           try {
             console.log("Room form data before creation:", Object.fromEntries(roomFormData.entries()));
             console.log("Property ID being used:", propertyResponse.id);
-            const createdRoom = await createRoom({ body: roomFormData }).unwrap();
+            const createdRoom = await createRoom({ propertyId: propertyResponse.id, body: roomFormData }).unwrap();
             console.log("Room created successfully:", createdRoom);
             roomsSuccessfullyCreated++;
           } catch (roomError) {

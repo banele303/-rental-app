@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLeasePayments = exports.getLeases = void 0;
+exports.getPropertyLeases = exports.getLeasePayments = exports.getLeases = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const getLeases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -44,3 +44,29 @@ const getLeasePayments = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getLeasePayments = getLeasePayments;
+const getPropertyLeases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { propertyId } = req.params;
+        console.log(`Fetching leases for property ID: ${propertyId}`);
+        if (!propertyId || isNaN(Number(propertyId))) {
+            console.log("Invalid property ID:", propertyId);
+            res.status(400).json({ message: "Invalid property ID" });
+            return;
+        }
+        const leases = yield prisma.lease.findMany({
+            where: { propertyId: Number(propertyId) },
+            include: {
+                tenant: true
+            }
+        });
+        console.log(`Found ${leases.length} leases for property ${propertyId}`);
+        res.json(leases);
+    }
+    catch (error) {
+        console.error("Error retrieving property leases:", error);
+        res
+            .status(500)
+            .json({ message: `Error retrieving property leases: ${error.message}` });
+    }
+});
+exports.getPropertyLeases = getPropertyLeases;

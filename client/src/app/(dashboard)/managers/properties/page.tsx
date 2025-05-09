@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Loading from "@/components/Loading";
-import { useGetAuthUserQuery, useGetManagerPropertiesQuery } from "@/state/api";
+import { useGetAuthUserQuery, useGetManagerPropertiesQuery, useDeletePropertyMutation } from "@/state/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,8 @@ const Properties = () => {
   } = useGetManagerPropertiesQuery(authUser?.cognitoInfo?.userId || "", {
     skip: !authUser?.cognitoInfo?.userId,
   });
+  
+  const [deleteProperty, { isLoading: isDeletePropertyLoading }] = useDeletePropertyMutation();
 
   const [deletePropertyId, setDeletePropertyId] = useState<number | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -96,34 +98,13 @@ const Properties = () => {
     setErrorMessage(null);
 
     try {
-      // Import and use AWS Amplify's fetchAuthSession to get the idToken
-      const { fetchAuthSession } = await import("aws-amplify/auth");
-      const session = await fetchAuthSession();
-      const { idToken } = session.tokens ?? {};
-
-      if (!idToken) {
-        throw new Error("Authentication token not found. Please log in again.");
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/properties/${deletePropertyId}?managerCognitoId=${authUser.cognitoInfo.userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${idToken}`
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.message || `Failed to delete property (Status: ${response.status})`;
-        throw new Error(errorMsg);
-      }
-
-      // Refetch properties after successful deletion
-      refetch();
+      // Use the RTK Query mutation hook instead of direct fetch
+      await deleteProperty({
+        id: deletePropertyId,
+        managerCognitoId: authUser.cognitoInfo.userId
+      }).unwrap();
+      
+      // Close the dialog after successful deletion
       setIsDeleteDialogOpen(false);
     } catch (error: any) {
       console.error("Error deleting property:", error);
@@ -131,10 +112,8 @@ const Properties = () => {
       // Handle token expired or invalid cases
       if (error.message?.includes("token") || error.message?.includes("unauthorized") || error.message?.includes("Unauthorized")) {
         setErrorMessage("Your session has expired. Please log in again.");
-        // Optional: redirect to login
-        // router.push("/login");
       } else {
-        setErrorMessage(error.message || "An unexpected error occurred.");
+        setErrorMessage(error.data?.message || error.message || "An unexpected error occurred.");
       }
     } finally {
       setIsDeleting(false);

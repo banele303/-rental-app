@@ -15,7 +15,7 @@ const upload = multer({
 });
 
 // Room routes
-router.get('/properties/:propertyId/rooms', getRooms);
+router.get('/:propertyId/rooms', getRooms);
 router.get('/:id', getRoom);
 router.post('/', authMiddleware(['admin', 'manager']), upload.array('photos', 10), createRoom);
 router.put('/:id', authMiddleware(['admin', 'manager']), upload.array('photos', 10), updateRoom);

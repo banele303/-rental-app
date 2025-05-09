@@ -210,16 +210,11 @@ const NewProperty = () => {
       // Create property first
       const propertyResponse = await createProperty(propertyFormData).unwrap();
       console.log("Property created successfully:", propertyResponse);
-      toast.success("Property details created successfully!", {
-        className: "bg-[#0070F3] text-white font-medium",
-        position: "top-center",
-        duration: 2000,
-      });
-
 
       // If we have rooms to add, create them for this property
       if (rooms.length > 0) {
         let roomsSuccessfullyCreated = 0;
+        let failedRooms = 0;
         for (const room of rooms) {
           const roomFormData = new FormData();
           roomFormData.append("propertyId", propertyResponse.id.toString());
@@ -252,20 +247,12 @@ const NewProperty = () => {
           } catch (roomError) {
              console.error("Error creating a room:", roomError);
              console.error("Room data that failed:", Object.fromEntries(roomFormData.entries()));
-             toast.error(`Failed to create one of the rooms. Please check its details.`, {
-                className: "bg-red-500 text-white font-medium",
-                position: "top-center",
-                duration: 4000,
-             });
+             failedRooms++;
           }
         }
-        if (roomsSuccessfullyCreated > 0) {
-            toast.success(`${roomsSuccessfullyCreated} of ${rooms.length} rooms created successfully!`, {
-                className: "bg-[#0070F3] text-white font-medium",
-                position: "top-center",
-                duration: 4000,
-            });
-        }
+        
+        // Log summary to console, but don't show multiple toasts
+        console.log(`Created ${roomsSuccessfullyCreated} of ${rooms.length} rooms. Failed: ${failedRooms}`);
       }
 
       // Reset form and states on overall success

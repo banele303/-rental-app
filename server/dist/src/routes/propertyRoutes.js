@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const propertyControllers_1 = require("../controllers/propertyControllers");
 const roomControllers_1 = require("../controllers/roomControllers");
 const leaseControllers_1 = require("../controllers/leaseControllers");
-const multer_1 = __importDefault(require("multer"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({ storage: storage });
@@ -20,4 +19,16 @@ router.get("/:propertyId/leases", leaseControllers_1.getPropertyLeases);
 router.post("/", (0, authMiddleware_1.authMiddleware)(["manager"]), upload.array("photos"), propertyControllers_1.createProperty);
 router.put("/:id", (0, authMiddleware_1.authMiddleware)(["manager"]), upload.array("photos"), propertyControllers_1.updateProperty);
 router.delete("/:id", (0, authMiddleware_1.authMiddleware)(["manager"]), propertyControllers_1.deleteProperty);
+// Special endpoint for room creation to work around API Gateway limitations
+const roomControllers_2 = require("../controllers/roomControllers");
+const multer_1 = __importDefault(require("multer"));
+// Setup multer for room photos
+const roomStorage = multer_1.default.memoryStorage();
+const roomUpload = (0, multer_1.default)({
+    storage: roomStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+});
+router.post("/:propertyId/create-room", (0, authMiddleware_1.authMiddleware)(["admin", "manager"]), roomUpload.array('photos', 10), roomControllers_2.createRoom);
 exports.default = router;

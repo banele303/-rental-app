@@ -599,8 +599,8 @@ export const api = createApi({
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
       query: ({ propertyId, body }) => ({
-        // Use the standard rooms endpoint path for better compatibility
-        url: `/properties/${propertyId}/rooms`,
+        // Use the custom endpoint which we know exists in the deployed API
+        url: `/properties/${propertyId}/create-room`,
         method: 'POST',
         body,
       }),
@@ -613,7 +613,10 @@ export const api = createApi({
         
         // Handle different error cases
         if (response.status === 404) {
-          return { message: "Property not found" };
+          // Don't mask 404 errors when creating rooms - make sure they propagate correctly
+          // as this indicates the API endpoint doesn't exist
+          console.error('API endpoint not found - this is likely a deployment configuration issue');
+          return response; // Return the original error to ensure it's properly handled as a failure
         }
         if (response.status === 400) {
           return { 

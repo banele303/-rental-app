@@ -629,13 +629,13 @@ export const api = createApi({
         }
         return { message: response.data?.message || "Failed to update room" };
       },
-      invalidatesTags: (result, error, { id }) => {
+      invalidatesTags: (result, error, { roomId, propertyId }) => {
         if (error) return [];
         return [
-          { type: 'Rooms', id },
+          { type: 'Rooms', id: roomId },
           { type: 'Rooms', id: 'LIST' },
-          { type: 'PropertyDetails', id: result?.propertyId },
-          { type: 'Properties', id: result?.propertyId }
+          { type: 'PropertyDetails', id: propertyId || result?.propertyId },
+          { type: 'Properties', id: propertyId || result?.propertyId }
         ];
       },
       async onQueryStarted(_, { queryFulfilled }) {

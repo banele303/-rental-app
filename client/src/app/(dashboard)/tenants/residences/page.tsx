@@ -57,7 +57,7 @@ const Residences = () => {
         <div className="flex flex-col items-center justify-center p-12 mt-8 bg-[#0F1112] border border-[#333] rounded-xl text-center">
           <Building className="h-12 w-12 text-gray-500 mb-4" />
           <h3 className="text-xl font-medium text-white mb-2">No Current Residences</h3>
-          <p className="text-gray-400">You don't have any active leases or rental agreements at this time.</p>
+          <p className="text-gray-400">You don&apos;t have any active leases or rental agreements at this time.</p>
         </div>
       )}
     </div>

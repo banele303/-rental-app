@@ -72,7 +72,7 @@ const Favorites = () => {
         <div className="flex flex-col items-center justify-center p-12 mt-8 bg-[#0F1112] border border-[#333] rounded-xl text-center">
           <Heart className="h-12 w-12 text-gray-500 mb-4" />
           <h3 className="text-xl font-medium text-white mb-2">No Favorites Yet</h3>
-          <p className="text-gray-400">You haven't added any properties to your favorites yet. Browse properties and click the heart icon to add them here.</p>
+          <p className="text-gray-400">You haven&apos;t added any properties to your favorites yet. Browse properties and click the heart icon to add them here.</p>
         </div>
       )}
     </div>

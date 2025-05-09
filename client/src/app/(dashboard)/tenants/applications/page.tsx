@@ -39,7 +39,7 @@ const Applications = () => {
         <div className="flex flex-col items-center justify-center p-12 mt-8 bg-[#0F1112] border border-[#333] rounded-xl text-center">
           <FileText className="h-12 w-12 text-gray-500 mb-4" />
           <h3 className="text-xl font-medium text-white mb-2">Access Restricted</h3>
-          <p className="text-gray-400">As a property manager, you don't have access to the tenant applications page. Please use the manager dashboard to view applications for your properties.</p>
+          <p className="text-gray-400">As a property manager, you don&apos;t have access to the tenant applications page. Please use the manager dashboard to view applications for your properties.</p>
         </div>
       </div>
     );
@@ -128,7 +128,7 @@ const Applications = () => {
                     ) : application.status === "Pending" ? (
                       <div className="bg-yellow-900/20 p-4 rounded-md text-yellow-300 flex items-center border border-yellow-800/30">
                         <Clock className="w-5 h-5 mr-2 flex-shrink-0" />
-                        <p>Your application is pending approval. We'll notify you once there's an update.</p>
+                        <p>Your application is pending approval. We&apos;ll notify you once there&apos;s an update.</p>
                       </div>
                     ) : (
                       <div className="bg-red-900/20 p-4 rounded-md text-red-300 flex items-center border border-red-800/30">
@@ -161,7 +161,7 @@ const Applications = () => {
           <div className="flex flex-col items-center justify-center p-12 mt-8 bg-[#0F1112] border border-[#333] rounded-xl text-center">
             <FileText className="h-12 w-12 text-gray-500 mb-4" />
             <h3 className="text-xl font-medium text-white mb-2">No Applications Found</h3>
-            <p className="text-gray-400">You haven't submitted any rental applications yet. Browse properties and apply for ones you're interested in.</p>
+            <p className="text-gray-400">You haven&apos;t submitted any rental applications yet. Browse properties and apply for ones you&apos;re interested in.</p>
           </div>
         )}
       </div>

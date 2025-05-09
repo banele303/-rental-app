@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
+import { RoomType } from "./roomControllers";
 import { wktToGeoJSON } from "@terraformer/wkt";
 import { S3Client, ObjectCannedACL, DeleteObjectCommand, PutObjectAclCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -310,10 +311,15 @@ export const getProperty = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+    const propertyId = Number(id);
+
+    // Fetch property by ID with location and synthetic room data
     const property = await prisma.property.findUnique({
-      where: { id: Number(id) },
-      include: {
+      where: { id: propertyId },
+      include: { 
         location: true,
+        // Include actual rooms if they exist
+        rooms: true
       },
     });
 
@@ -322,29 +328,62 @@ export const getProperty = async (
       return;
     }
 
-    const coordinates: { coordinates: string }[] =
-      await prisma.$queryRaw`SELECT ST_asText(coordinates) as coordinates from "Location" where id = ${property.location.id}`;
+    // Convert coordinates to GeoJSON format if available
+    let coordinates = null;
+    // Use type assertion to tell TypeScript that coordinates exists on location
+    if (property.location && (property.location as any).coordinates) {
+      try {
+        const wktGeometry = (property.location as any).coordinates.toString();
+        coordinates = wktToGeoJSON(wktGeometry);
+      } catch (error) {
+        console.error("Error converting coordinates:", error);
+      }
+    }
 
-    const geoJSON: any = wktToGeoJSON(coordinates[0]?.coordinates || "");
-    const longitude = geoJSON.coordinates[0];
-    const latitude = geoJSON.coordinates[1];
+    // Check if we have real rooms data
+    let rooms = property.rooms || [];
+    
+    // If we don't have any rooms, create a synthetic one based on the property
+    if (rooms.length === 0) {
+      // Generate a synthetic room from the property data for backwards compatibility
+      const syntheticRoom = {
+        id: propertyId * 1000, // Create a unique ID for the room
+        propertyId: propertyId,
+        name: property.name || 'Default Room',
+        description: property.description || 'No description available',
+        pricePerMonth: property.pricePerMonth || 0,
+        securityDeposit: property.securityDeposit || 0,
+        squareFeet: property.squareFeet || 0,
+        photoUrls: property.photoUrls || [],
+        isAvailable: true,
+        roomType: RoomType.PRIVATE,
+        capacity: 1,
+        amenities: property.amenities || [],
+        features: property.highlights || [],
+        availableFrom: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      console.log('Created synthetic room from property:', syntheticRoom);
+      rooms = [syntheticRoom];
+    }
 
-    const propertyWithCoordinates = {
+    // Return property with coordinates and rooms
+    const propertyWithRooms = {
       ...property,
+      rooms: rooms, // Include the rooms (real or synthetic)
       location: {
         ...property.location,
-        coordinates: {
-          longitude,
-          latitude,
-        },
+        coordinates,
       },
     };
-    res.json(propertyWithCoordinates);
+
+    console.log(`Returning property ${propertyId} with ${rooms.length} rooms`)
+    res.json(propertyWithRooms);
   } catch (err: any) {
-    console.error("Error retrieving property:", err);
-    res
-      .status(500)
-      .json({ message: `Error retrieving property: ${err.message}` });
+    console.error("Error fetching property:", err);
+    res.status(500).json({ message: `Error fetching property: ${err.message}` });
   }
 };
 

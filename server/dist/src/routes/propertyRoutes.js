@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,7 +22,21 @@ const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({ storage: storage });
 const router = express_1.default.Router();
 router.get("/", propertyControllers_1.getProperties);
-router.get("/:id", propertyControllers_1.getProperty);
+// Override the default getProperty handler to include rooms
+router.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // First get the property data using the existing controller
+        yield (0, propertyControllers_1.getProperty)(req, res);
+        // The response has already been sent by getProperty
+        // But we'll add additional logic in the propertyController to include rooms
+    }
+    catch (error) {
+        console.error("Error in custom property handler:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Failed to fetch property with rooms" });
+        }
+    }
+}));
 // Add nested routes for rooms and leases
 router.get("/:propertyId/rooms", roomControllers_1.getRooms);
 router.get("/:propertyId/leases", leaseControllers_1.getPropertyLeases);

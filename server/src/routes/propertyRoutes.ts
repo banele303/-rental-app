@@ -18,7 +18,22 @@ const upload = multer({ storage: storage });
 const router = express.Router();
 
 router.get("/", getProperties);
-router.get("/:id", getProperty);
+
+// Override the default getProperty handler to include rooms
+router.get("/:id", async (req, res) => {
+  try {
+    // First get the property data using the existing controller
+    await getProperty(req, res);
+    
+    // The response has already been sent by getProperty
+    // But we'll add additional logic in the propertyController to include rooms
+  } catch (error) {
+    console.error("Error in custom property handler:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to fetch property with rooms" });
+    }
+  }
+});
 
 // Add nested routes for rooms and leases
 router.get("/:propertyId/rooms", getRooms);

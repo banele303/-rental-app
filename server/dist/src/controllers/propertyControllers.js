@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteProperty = exports.updateProperty = exports.createProperty = exports.getProperty = exports.getProperties = void 0;
 require("dotenv/config");
 const client_1 = require("@prisma/client");
+const roomControllers_1 = require("./roomControllers");
 const wkt_1 = require("@terraformer/wkt");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const lib_storage_1 = require("@aws-sdk/lib-storage");
@@ -244,34 +245,68 @@ const getProperties = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.getProperties = getProperties;
 const getProperty = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
         const { id } = req.params;
+        const propertyId = Number(id);
+        // Fetch property by ID with location and synthetic room data
         const property = yield prisma.property.findUnique({
-            where: { id: Number(id) },
+            where: { id: propertyId },
             include: {
                 location: true,
+                // Include actual rooms if they exist
+                rooms: true
             },
         });
         if (!property) {
             res.status(404).json({ message: "Property not found" });
             return;
         }
-        const coordinates = yield prisma.$queryRaw `SELECT ST_asText(coordinates) as coordinates from "Location" where id = ${property.location.id}`;
-        const geoJSON = (0, wkt_1.wktToGeoJSON)(((_a = coordinates[0]) === null || _a === void 0 ? void 0 : _a.coordinates) || "");
-        const longitude = geoJSON.coordinates[0];
-        const latitude = geoJSON.coordinates[1];
-        const propertyWithCoordinates = Object.assign(Object.assign({}, property), { location: Object.assign(Object.assign({}, property.location), { coordinates: {
-                    longitude,
-                    latitude,
-                } }) });
-        res.json(propertyWithCoordinates);
+        // Convert coordinates to GeoJSON format if available
+        let coordinates = null;
+        // Use type assertion to tell TypeScript that coordinates exists on location
+        if (property.location && property.location.coordinates) {
+            try {
+                const wktGeometry = property.location.coordinates.toString();
+                coordinates = (0, wkt_1.wktToGeoJSON)(wktGeometry);
+            }
+            catch (error) {
+                console.error("Error converting coordinates:", error);
+            }
+        }
+        // Check if we have real rooms data
+        let rooms = property.rooms || [];
+        // If we don't have any rooms, create a synthetic one based on the property
+        if (rooms.length === 0) {
+            // Generate a synthetic room from the property data for backwards compatibility
+            const syntheticRoom = {
+                id: propertyId * 1000, // Create a unique ID for the room
+                propertyId: propertyId,
+                name: property.name || 'Default Room',
+                description: property.description || 'No description available',
+                pricePerMonth: property.pricePerMonth || 0,
+                securityDeposit: property.securityDeposit || 0,
+                squareFeet: property.squareFeet || 0,
+                photoUrls: property.photoUrls || [],
+                isAvailable: true,
+                roomType: roomControllers_1.RoomType.PRIVATE,
+                capacity: 1,
+                amenities: property.amenities || [],
+                features: property.highlights || [],
+                availableFrom: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            console.log('Created synthetic room from property:', syntheticRoom);
+            rooms = [syntheticRoom];
+        }
+        // Return property with coordinates and rooms
+        const propertyWithRooms = Object.assign(Object.assign({}, property), { rooms: rooms, location: Object.assign(Object.assign({}, property.location), { coordinates }) });
+        console.log(`Returning property ${propertyId} with ${rooms.length} rooms`);
+        res.json(propertyWithRooms);
     }
     catch (err) {
-        console.error("Error retrieving property:", err);
-        res
-            .status(500)
-            .json({ message: `Error retrieving property: ${err.message}` });
+        console.error("Error fetching property:", err);
+        res.status(500).json({ message: `Error fetching property: ${err.message}` });
     }
 });
 exports.getProperty = getProperty;

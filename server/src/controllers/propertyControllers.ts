@@ -752,6 +752,13 @@ export const updateProperty = async (
         photoUrls,
       };
 
+      // Remove any invalid fields that shouldn't be sent to Prisma
+      // 'propertyId' isn't a valid field in the Property schema
+      if ('propertyId' in updateData) {
+        console.log("Removing invalid propertyId field from property update data");
+        delete updateData.propertyId;
+      }
+
       // Handle array fields properly
       if (propertyData.amenities) {
         updateData.amenities = Array.isArray(propertyData.amenities) 
@@ -802,6 +809,9 @@ export const updateProperty = async (
       if (propertyData.squareFeet !== undefined) {
         updateData.squareFeet = parseInt(propertyData.squareFeet) || existingProperty.squareFeet;
       }
+
+      // For better debugging
+      console.log("Prepared property update data:", JSON.stringify(updateData, null, 2));
 
       // Update the property
       const updatedProperty = await prisma.property.update({

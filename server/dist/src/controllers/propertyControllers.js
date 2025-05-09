@@ -591,6 +591,12 @@ const updateProperty = (req, res) => __awaiter(void 0, void 0, void 0, function*
         try {
             // Prepare data with type handling
             const updateData = Object.assign(Object.assign({}, propertyData), { photoUrls });
+            // Remove any invalid fields that shouldn't be sent to Prisma
+            // 'propertyId' isn't a valid field in the Property schema
+            if ('propertyId' in updateData) {
+                console.log("Removing invalid propertyId field from property update data");
+                delete updateData.propertyId;
+            }
             // Handle array fields properly
             if (propertyData.amenities) {
                 updateData.amenities = Array.isArray(propertyData.amenities)
@@ -632,6 +638,8 @@ const updateProperty = (req, res) => __awaiter(void 0, void 0, void 0, function*
             if (propertyData.squareFeet !== undefined) {
                 updateData.squareFeet = parseInt(propertyData.squareFeet) || existingProperty.squareFeet;
             }
+            // For better debugging
+            console.log("Prepared property update data:", JSON.stringify(updateData, null, 2));
             // Update the property
             const updatedProperty = yield prisma.property.update({
                 where: { id: propertyId },

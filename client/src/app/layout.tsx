@@ -24,7 +24,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${GeistSans.className} ${GeistMono.className} antialiased`}>
         <Providers>{children}</Providers>
-        <Toaster />
+        <Toaster 
+          position="bottom-right"
+          closeButton
+          richColors
+          duration={4000}
+        />
       </body>
     </html>
   );

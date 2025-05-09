@@ -363,7 +363,7 @@ export const api = createApi({
             const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
             
             // Build the URL with the manager ID as part of the query string
-            let url = `properties/${numericId}`;
+            const url = `properties/${numericId}`;
             
             return {
                 url,

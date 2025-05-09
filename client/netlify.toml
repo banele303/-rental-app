@@ -1,6 +1,0 @@
-[build]
-  command = "npm run build"
-  publish = ".next"
-
-[build.environment]
-  NEXT_PUBLIC_API_BASE_URL = "https://your-server-api-url.com"

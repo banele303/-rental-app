@@ -465,7 +465,7 @@ export const api = createApi({
     // Room related endpoints
     getRooms: build.query<Room[], number>({
       query: (propertyId) => ({
-        url: `/rooms/properties/${propertyId}/rooms`,
+        url: `/properties/${propertyId}/rooms`,
         method: 'GET',
       }),
       transformResponse: (response: any) => {

@@ -531,7 +531,8 @@ export const api = createApi({
     }),
 
     getRoom: build.query<Room, { propertyId: number, roomId: number }>({
-      query: ({ propertyId, roomId }) => `properties/${propertyId}/rooms/${roomId}`,
+      query: ({ propertyId, roomId }) => `rooms/${roomId}?propertyId=${propertyId}`,
+      
       providesTags: (result, error, { roomId }) => [{ type: "Rooms", id: roomId }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -542,7 +543,7 @@ export const api = createApi({
 
     createRoom: build.mutation<Room, { propertyId: number, body: FormData }>({
       query: ({ propertyId, body }) => ({
-        url: `/properties/${propertyId}/rooms`,
+        url: `/rooms`,
         method: 'POST',
         body,
       }),
@@ -612,7 +613,7 @@ export const api = createApi({
 
     updateRoom: build.mutation<Room, { propertyId: number, roomId: number; data: FormData }>({
       query: ({ propertyId, roomId, data }) => ({
-        url: `properties/${propertyId}/rooms/${roomId}`,
+        url: `rooms/${roomId}`,
         method: "PUT",
         body: data,
       }),
@@ -651,7 +652,7 @@ export const api = createApi({
 
     deleteRoom: build.mutation<{ message: string; id: number }, { propertyId: number, roomId: number }>({
       query: ({ propertyId, roomId }) => ({
-        url: `properties/${propertyId}/rooms/${roomId}`,
+        url: `rooms/${roomId}?propertyId=${propertyId}`,
         method: "DELETE",
       }),
       invalidatesTags: (result, error, { roomId }) => [

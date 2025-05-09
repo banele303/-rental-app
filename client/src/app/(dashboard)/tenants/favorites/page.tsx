@@ -35,7 +35,11 @@ const Favorites = () => {
 
   const handleRemoveFavorite = async (propertyId: number) => {
     try {
-      await removeFavorite(propertyId).unwrap();
+      // Pass both cognitoId and propertyId as an object to match the expected type
+      await removeFavorite({ 
+        cognitoId: authUser?.cognitoInfo?.userId || "", 
+        propertyId 
+      }).unwrap();
       // Refetch to update the UI
       refetchTenant();
       refetchProperties();

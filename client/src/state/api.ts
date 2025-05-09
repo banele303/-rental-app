@@ -524,8 +524,10 @@ export const api = createApi({
         try {
           await queryFulfilled;
         } catch (error) {
+          // Just log the error without showing a toast
           console.error('Error fetching rooms:', error);
-          toast.error('Failed to fetch rooms');
+          // Don't show toast for room fetch errors as it's disruptive
+          // This prevents unnecessary error notifications
         }
       },
     }),

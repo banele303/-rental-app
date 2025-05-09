@@ -38,21 +38,30 @@ export function cleanParams(params: Record<string, any>): Record<string, any> {
 
 type MutationMessages = {
   success?: string;
-  error: string;
+  error?: string;
+  showErrorToast?: boolean;
 };
 
 export const withToast = async <T>(
   mutationFn: Promise<T>,
   messages: Partial<MutationMessages>
 ) => {
-  const { success, error } = messages;
+  const { success, error, showErrorToast = true } = messages;
 
   try {
     const result = await mutationFn;
     if (success) toast.success(success);
     return result;
-  } catch (err) {
-    if (error) toast.error(error);
+  } catch (err: any) {
+    // Only show error toast if explicitly enabled and there's an error message
+    if (showErrorToast && error) {
+      // Extract the actual error message when possible
+      const errorMessage = err?.data?.message || err?.message || error;
+      toast.error(errorMessage, {
+        id: `error-${errorMessage.slice(0, 20)}`, // Use first part of message as ID to prevent duplicates
+        duration: 4000
+      });
+    }
     throw err;
   }
 };

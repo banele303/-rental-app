@@ -325,10 +325,23 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
     const numericSecurityDeposit = parseFloat(securityDeposit) || 0;
     const numericSquareFeet = squareFeet ? parseInt(squareFeet) : null;
     const parsedAvailableFrom = availableFrom ? new Date(availableFrom) : null;
-    const parsedRoomType = roomType || RoomType.PRIVATE;
+    
+    // Ensure roomType is properly handled as an enum value
+    let parsedRoomType: RoomType;
+    if (!roomType || typeof roomType !== 'string') {
+      parsedRoomType = RoomType.PRIVATE;
+    } else if (Object.values(RoomType).includes(roomType as RoomType)) {
+      // If it's a valid enum value string, use it directly
+      parsedRoomType = roomType as RoomType;
+    } else {
+      // Default to PRIVATE for invalid values
+      console.warn(`Invalid roomType value: ${roomType}, defaulting to PRIVATE`);
+      parsedRoomType = RoomType.PRIVATE;
+    }
+    
     const numericCapacity = parseInt(capacity) || 1;
     const parsedIsAvailable = isAvailable === "true" || isAvailable === true;
-
+    
     console.log("Processed room data:", {
       numericPropertyId,
       numericPricePerMonth,

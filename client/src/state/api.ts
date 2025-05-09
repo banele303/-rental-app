@@ -95,7 +95,7 @@ export const api = createApi({
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
           
-          let currentInit = {...init};
+          const currentInit = {...init};
           
           // If we need to recreate FormData
           if (retries > 0 && originalBodyIsFormData && formDataEntries) {

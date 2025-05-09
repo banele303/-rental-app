@@ -22,8 +22,4 @@ router.post('/', authMiddleware(['admin', 'manager']), upload.array('photos', 10
 router.put('/:id', authMiddleware(['admin', 'manager']), upload.array('photos', 10), updateRoom);
 router.delete('/:id', authMiddleware(['admin', 'manager']), deleteRoom);
 
-// Direct access endpoint for room creation that doesn't rely on nested routes
-// This is more likely to work with existing API Gateway configuration
-router.post('/create-with-property/:propertyId', authMiddleware(['admin', 'manager']), upload.array('photos', 10), createRoom);
-
 export default router;

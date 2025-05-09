@@ -118,43 +118,96 @@ async function deleteFileFromS3(fileUrl: string): Promise<void> {
 export const getRooms = async (req: Request, res: Response): Promise<void> => {
   try {
     const { propertyId } = req.params;
-    console.log("Getting rooms for property:", propertyId);
     
-    if (!propertyId || isNaN(Number(propertyId))) {
-      console.log("Invalid property ID:", propertyId);
-      res.status(400).json({ message: "Invalid property ID" });
-      return;
+    // Handle both direct /rooms call and nested /properties/:propertyId/rooms
+    if (propertyId) {
+      console.log(`Fetching rooms for property: ${propertyId}`);
+      
+      // Validate property ID
+      if (isNaN(Number(propertyId))) {
+        console.log(`Invalid property ID format: ${propertyId}`);
+        res.status(400).json({ message: "Valid property ID is required" });
+        return;
+      }
+    } else {
+      console.log('Fetching all rooms (no property filter)');
     }
 
-    const numericPropertyId = Number(propertyId);
+    const numericPropertyId = propertyId ? Number(propertyId) : null;
+    console.log(`Parsed numeric property ID: ${numericPropertyId}`);
 
-    // First check if property exists
-    const propertyQuery = Prisma.sql`
-      SELECT id FROM "Property" WHERE id = ${numericPropertyId}
-    `;
-    
-    const properties = await prisma.$queryRaw(propertyQuery);
-    console.log("Found property:", properties);
-    
-    if (!properties || !Array.isArray(properties) || properties.length === 0) {
-      console.log("Property not found for ID:", propertyId);
-      res.status(404).json({ message: "Property not found" });
-      return;
+    // Different behavior based on if propertyId exists
+    if (numericPropertyId) {
+      // First check if property exists
+      try {
+        console.log(`Checking if property ${numericPropertyId} exists`);
+        const propertyQuery = Prisma.sql`
+          SELECT id, name FROM "Property" WHERE id = ${numericPropertyId}
+        `;
+        
+        const properties = await prisma.$queryRaw(propertyQuery);
+        console.log('Property query result:', JSON.stringify(properties));
+        
+        if (!properties || !Array.isArray(properties) || properties.length === 0) {
+          console.log(`Property ${numericPropertyId} not found`);
+          res.status(404).json({ message: "Property not found" });
+          return;
+        }
+        
+        console.log(`Property ${numericPropertyId} found, proceeding to fetch rooms`);
+      } catch (propertyError) {
+        console.error(`Error checking if property ${numericPropertyId} exists:`, propertyError);
+        res.status(500).json({ message: "Error checking property", error: propertyError });
+        return;
+      }
+      
+      // Get all rooms for this property
+      try {
+        console.log(`Building query to fetch rooms for property ${numericPropertyId}`);
+        const roomsQuery = Prisma.sql`
+          SELECT r.id, r.name, r."pricePerMonth", r."securityDeposit", r."isAvailable", r."photoUrls", r."propertyId", 
+            p.name as "propertyName"
+          FROM "Room" r
+          JOIN "Property" p ON r."propertyId" = p.id
+          WHERE r."propertyId" = ${numericPropertyId}
+        `;
+        
+        console.log('Executing rooms query...');
+        const rooms = await prisma.$queryRaw(roomsQuery);
+        console.log(`Found ${Array.isArray(rooms) ? rooms.length : 0} rooms for property ${numericPropertyId}`);
+        res.json(rooms || []);
+      } catch (error) {
+        console.error(`Error fetching rooms for property ${numericPropertyId}:`, error);
+        res.status(500).json({ 
+          message: "Error fetching rooms", 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    } else {
+      // Get ALL rooms when no propertyId is provided
+      try {
+        console.log('Building query to fetch all rooms');
+        const roomsQuery = Prisma.sql`
+          SELECT r.id, r.name, r."pricePerMonth", r."securityDeposit", r."isAvailable", r."photoUrls", r."propertyId", 
+            p.name as "propertyName"
+          FROM "Room" r
+          JOIN "Property" p ON r."propertyId" = p.id
+        `;
+        
+        console.log('Executing all rooms query...');
+        const rooms = await prisma.$queryRaw(roomsQuery);
+        console.log(`Found ${Array.isArray(rooms) ? rooms.length : 0} rooms in total`);
+
+        // Return empty array if no rooms found
+        res.json(rooms || []);
+      } catch (error) {
+        console.error("Error fetching all rooms:", error);
+        res.status(500).json({ 
+          message: "Error fetching rooms", 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      }
     }
-
-    // Using raw query for better performance and flexibility
-    const roomsQuery = Prisma.sql`
-      SELECT r.*
-      FROM "Room" r
-      WHERE r."propertyId" = ${numericPropertyId}
-      ORDER BY r."createdAt" DESC
-    `;
-
-    const rooms = await prisma.$queryRaw(roomsQuery);
-    console.log(`Found ${Array.isArray(rooms) ? rooms.length : 0} rooms for property ${propertyId}`);
-
-    // Return empty array if no rooms found
-    res.json(rooms || []);
   } catch (error: any) {
     console.error("Error retrieving rooms:", error);
     res.status(500).json({ message: `Error retrieving rooms: ${error.message}` });
@@ -398,6 +451,31 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
       const newRooms = await prisma.$queryRaw<any[]>(createRoomQuery);
       const newRoom = newRooms[0];
 
+      // After creating the room, update the associated property to ensure proper linking
+      try {
+        // Get existing property data including rooms
+        const property = await prisma.property.findUnique({
+          where: { id: numericPropertyId },
+          include: { rooms: true }
+        });
+        
+        if (property) {
+          console.log(`Ensuring room ${newRoom.id} is linked to property ${numericPropertyId}`);
+          // This will ensure the room is properly linked in the database relationship
+          await prisma.property.update({
+            where: { id: numericPropertyId },
+            data: { 
+              // When using Prisma client, we don't need to manually set updatedAt
+              // It will be updated automatically
+              rooms: { connect: { id: newRoom.id } }
+            }
+          });
+        }
+      } catch (linkError) {
+        // Don't fail if the linking update has issues, just log it
+        console.warn("Room created but property linking step had issues:", linkError);
+      }
+
       console.log("Room created successfully:", newRoom);
       res.status(201).json(newRoom);
     } catch (roomError: any) {
@@ -562,8 +640,8 @@ export const updateRoom = async (req: Request, res: Response): Promise<void> => 
       setClauses.push(Prisma.sql`"features" = ${processedFeatures}`);
     }
     
-    // Add updatedAt timestamp
-    setClauses.push(Prisma.sql`"updatedAt" = CURRENT_TIMESTAMP`);
+    // No need to set updatedAt manually
+    // Prisma will handle this automatically
 
     try {
       // Only update if there are fields to update

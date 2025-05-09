@@ -12,7 +12,10 @@ const HomeListings = () => {
   const { data: authUser } = useGetAuthUserQuery();
   const { data: tenant } = useGetTenantQuery(
     authUser?.cognitoInfo?.userId || "",
-    { skip: !authUser?.cognitoInfo?.userId }
+    { 
+      // Skip if no user ID or if user is a manager
+      skip: !authUser?.cognitoInfo?.userId || authUser?.userRole === "manager" 
+    }
   );
 
   const [addFavorite] = useAddFavoritePropertyMutation();

@@ -6,6 +6,8 @@ import {
   updateProperty,
   deleteProperty,
 } from "../controllers/propertyControllers";
+import { getRooms } from "../controllers/roomControllers";
+import { getPropertyLeases } from "../controllers/leaseControllers";
 import multer from "multer";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -16,6 +18,11 @@ const router = express.Router();
 
 router.get("/", getProperties);
 router.get("/:id", getProperty);
+
+// Add nested routes for rooms and leases
+router.get("/:propertyId/rooms", getRooms);
+router.get("/:propertyId/leases", getPropertyLeases);
+
 router.post(
   "/",
   authMiddleware(["manager"]),

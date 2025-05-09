@@ -286,12 +286,26 @@ export const api = createApi({
     }),
 
     getProperty: build.query<Property, number>({
-      query: (id) => `properties/${id}`,
+      query: (id) => {
+        return {
+          url: `properties/${id}`,
+          method: 'GET',
+        };
+      },
+      transformErrorResponse: (response: any) => {
+        if (response?.status === 404) {
+          console.error('Property not found:', response);
+          return { data: null };
+        }
+        return response;
+      },
       providesTags: (result, error, id) => [{ type: "PropertyDetails", id }],
       async onQueryStarted(_, { queryFulfilled }) {
-        await withToast(queryFulfilled, {
-          error: "Failed to load property details.",
-        });
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          console.error("Failed to load property details:", error);
+        }
       },
     }),
 
@@ -344,20 +358,37 @@ export const api = createApi({
     }),
 
     deleteProperty: build.mutation<{ message: string; id: number }, { id: number; managerCognitoId?: string }>({
-        query: ({ id, managerCognitoId }) => ({
-            url: `properties/${id}`,
-            method: "DELETE",
-            params: managerCognitoId ? { managerCognitoId } : undefined,
-        }),
+        query: ({ id, managerCognitoId }) => {
+            // Ensure ID is a number
+            const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+            
+            // Build the URL with the manager ID as part of the query string
+            let url = `properties/${numericId}`;
+            
+            return {
+                url,
+                method: "DELETE",
+                params: managerCognitoId ? { managerCognitoId } : undefined,
+            };
+        },
+        transformErrorResponse: (response: any) => {
+            console.error('Delete property error response:', response);
+            const message = response.data?.message || 
+                          `Failed to delete property (Status: ${response.status})`;
+            return { data: { message } };
+        },
         invalidatesTags: (result, error, { id }) => [
             { type: "Properties", id: "LIST" },
             { type: "PropertyDetails", id },
         ],
         async onQueryStarted(_, { queryFulfilled }) {
-            await withToast(queryFulfilled, {
-                success: "Property deleted successfully!",
-                error: "Failed to delete property.",
-            });
+            try {
+                const result = await queryFulfilled;
+                toast.success("Property deleted successfully!");
+            } catch (error: any) {
+                console.error("Error deleting property:", error);
+                toast.error(error?.data?.message || "Failed to delete property.");
+            }
         },
     }),
 
@@ -465,7 +496,7 @@ export const api = createApi({
     // Room related endpoints
     getRooms: build.query<Room[], number>({
       query: (propertyId) => ({
-        url: `/properties/${propertyId}/rooms`,
+        url: `properties/${propertyId}/rooms`,
         method: 'GET',
       }),
       transformResponse: (response: any) => {
@@ -477,6 +508,7 @@ export const api = createApi({
       },
       transformErrorResponse: (response: any) => {
         if (response?.status === 404) {
+          console.error('Room data not found for property:', response);
           return { data: [] };
         }
         return response;
@@ -649,15 +681,27 @@ export const api = createApi({
     }),
 
     getPropertyLeases: build.query<Lease[], number>({
-      query: (propertyId) => `properties/${propertyId}/leases`,
+      query: (propertyId) => ({
+        url: `properties/${propertyId}/leases`,
+        method: 'GET',
+      }),
+      transformErrorResponse: (response: any) => {
+        if (response?.status === 404) {
+          console.error('Property leases not found:', response);
+          return { data: [] }; // Return empty array on 404
+        }
+        return response;
+      },
       providesTags: (result, error, propertyId) => [
           ...(result ?? []).map(({ id }) => ({ type: 'Leases' as const, id })),
           { type: 'Leases', id: 'LIST', propertyId },
       ],
       async onQueryStarted(_, { queryFulfilled }) {
-        await withToast(queryFulfilled, {
-          error: "Failed to fetch property leases.",
-        });
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          console.error("Failed to fetch property leases:", error);
+        }
       },
     }),
 

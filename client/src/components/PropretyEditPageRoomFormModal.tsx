@@ -170,27 +170,6 @@ export function PropertyEditPageRoomFormModal({
               <ModalCreateFormField name="roomType" label="Room Type" type="select" options={Object.values(ModalRoomTypeEnum).map(rt => ({ value: rt, label: rt }))} />
               <ModalCreateFormField name="capacity" label="Capacity (Persons)" type="number" min={1} placeholder="e.g., 2" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <ModalCreateFormField name="pricePerMonth" label="Price per Month" type="number" min={0} inputClassName="pl-7" placeholder="e.g., 5000"/>
-                <span className="absolute top-9 left-3 text-muted-foreground dark:text-gray-400">R</span>
-              </div>
-              <div className="relative">
-                <ModalCreateFormField name="securityDeposit" label="Security Deposit (Optional)" type="number" min={0} inputClassName="pl-7" placeholder="e.g., 5000"/>
-                <span className="absolute top-9 left-3 text-muted-foreground dark:text-gray-400">R</span>
-              </div>
-            </div>
-            <ModalCreateFormField name="squareFeet" label="Square Feet (Optional)" type="number" min={0} placeholder="e.g., 200"/>
-
-            <div className="flex items-center space-x-3 pt-2">
-              <ControllerModal name="isAvailable" control={roomControl} render={({ field }) => <UISwitch id={`isAvailableRoom-${initialRoomData?.id || 'new'}`} checked={field.value} onCheckedChange={field.onChange} />} />
-              <UILabel htmlFor={`isAvailableRoom-${initialRoomData?.id || 'new'}`} className="font-normal dark:text-gray-300">Is this room currently available?</UILabel>
-            </div>
-             {/* Use the custom DatePicker component */}
-             <ModalCreateFormField name="availableFrom" label="Available From (Optional)" type="date" />
-
-
             <ModalCreateFormField name="amenities" label="Room-Specific Amenities" type="multi-select" options={Object.values(ModalAmenityEnum).map(a => ({ value: a, label: a }))} />
             {/* Assuming features are free text for now */}
             <ModalCreateFormField name="features" label="Room-Specific Features (comma-separated)" type="textarea" placeholder="e.g., Private Balcony, Walk-in Closet" />
@@ -199,11 +178,11 @@ export function PropertyEditPageRoomFormModal({
             <div className="space-y-3 border-t border-border dark:border-gray-700 pt-4 mt-4">
                 <UILabel className="text-base font-semibold dark:text-gray-100">Room Photos</UILabel>
                 <div>
-                    <UILabel htmlFor={`roomPhotosFile-${initialRoomData?.id || 'new'}`} className="text-sm font-medium text-muted-foreground dark:text-gray-400">Upload New Photos</UILabel>
+                    <UILabel htmlFor={`roomPhotosFile-${initialRoomData?.id || 'new'}`} className="text-sm font-medium text-foreground dark:text-gray-200">Upload New Photos</UILabel>
                     <UIInput id={`roomPhotosFile-${initialRoomData?.id || 'new'}`} type="file" multiple onChange={handleFileChangeModal} className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 file:text-primary dark:file:text-primary-foreground"/>
                     <div className="mt-2 flex items-center space-x-2">
-                        <UICheckbox id={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} checked={replacePhotosFlagModal} onCheckedChange={(checked) => setReplacePhotosFlagModal(Boolean(checked))} className="dark:border-gray-600 dark.data-[state=checked]:bg-primary" />
-                        <UILabel htmlFor={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} className="text-xs font-normal dark:text-gray-300">Replace all existing photos for this room</UILabel>
+                        <UICheckbox id={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} checked={replacePhotosFlagModal} onCheckedChange={(checked) => setReplacePhotosFlagModal(Boolean(checked))} className="dark:border-gray-600 dark:data-[state=checked]:bg-primary" />
+                        <UILabel htmlFor={`replaceRoomPhotos-${initialRoomData?.id || 'new'}`} className="text-xs font-normal text-foreground dark:text-gray-300">Replace all existing photos for this room</UILabel>
                     </div>
                 </div>
 
@@ -223,7 +202,7 @@ export function PropertyEditPageRoomFormModal({
                 {currentPhotosInModal.length > 0 && (
                     <div className="mt-2">
                         <p className="text-xs text-muted-foreground dark:text-gray-400 mb-1">Current photos ({currentPhotosInModal.length}):</p>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        <div className="grid grid-cols-2 gap-4">
                             {currentPhotosInModal.map((url) => (
                                 <div key={url} className="relative group aspect-square w-20 h-20">
                                     <Image src={url} alt="Current room photo" layout="fill" objectFit="cover" className="rounded-md border dark:border-gray-600" />

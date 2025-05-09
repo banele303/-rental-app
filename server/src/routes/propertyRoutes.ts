@@ -1,4 +1,5 @@
 import express from "express";
+import multer from 'multer';
 import {
   getProperties,
   getProperty,
@@ -6,7 +7,7 @@ import {
   updateProperty,
   deleteProperty,
 } from "../controllers/propertyControllers";
-import { getRooms } from "../controllers/roomControllers";
+import { getRooms, createRoom } from "../controllers/roomControllers";
 import { getPropertyLeases } from "../controllers/leaseControllers";
 
 import { authMiddleware } from "../middleware/authMiddleware";
@@ -42,8 +43,6 @@ router.delete(
 );
 
 // Special endpoint for room creation to work around API Gateway limitations
-import { createRoom } from '../controllers/roomControllers';
-import multer from 'multer';
 
 // Setup multer for room photos
 const roomStorage = multer.memoryStorage();

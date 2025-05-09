@@ -551,16 +551,26 @@ export const api = createApi({
 
     // Room related endpoints
     getRooms: build.query<Room[], number>({
+      // Use the property endpoint directly since we know it works
       query: (propertyId) => ({
-        url: `rooms?propertyId=${propertyId}`,
+        url: `properties/${propertyId}`,
         method: 'GET',
       }),
+      // Extract rooms from the property data and handle potential errors
       transformResponse: (response: any) => {
-        if (!response || !Array.isArray(response)) {
-          console.log('Invalid rooms response:', response);
-          return [];
+        // First check if we have a property response with rooms
+        if (response?.rooms && Array.isArray(response.rooms)) {
+          return response.rooms;
         }
-        return response;
+        
+        // If we have a direct array response
+        if (Array.isArray(response)) {
+          return response;
+        }
+        
+        // Fallback to empty array for any other case
+        console.log('Invalid rooms response:', response);
+        return [];
       },
       transformErrorResponse: (response: any) => {
         if (response?.status === 404) {
@@ -602,9 +612,9 @@ export const api = createApi({
         // Add propertyId to the form data
         body.append('propertyId', propertyId.toString());
         return {
-          // Use non-nested route to avoid API Gateway configuration issues
-          url: `/rooms`,
-          method: 'POST',
+          // Use the property endpoint directly since we know it works
+          url: `/properties/${propertyId}`,
+          method: 'PUT',
           body,
         };
       },

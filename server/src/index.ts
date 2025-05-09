@@ -48,6 +48,10 @@ app.use("/properties", propertyRoutes);
 // Nest room and lease routes under properties path
 app.use("/properties/:propertyId/rooms", roomRoutes);
 app.use("/properties/:propertyId/leases", leaseRoutes);
+
+// Also provide direct access routes for compatibility (temporary solution)
+app.use("/rooms", roomRoutes);
+app.use("/leases", leaseRoutes);
 app.use("/tenants", authMiddleware(["tenant"]), tenantRoutes);
 app.use("/managers", authMiddleware(["manager"]), managerRoutes);
 console.log("✅ All routes configured");

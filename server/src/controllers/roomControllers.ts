@@ -279,8 +279,10 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
     const files = req.files as Express.Multer.File[] || [];
     console.log(`Received ${files.length} files for room`);
     
+    // Get propertyId from either params (for the new flat route) or body (for backward compatibility)
+    let propertyId = req.params.propertyId || req.body.propertyId;
+    
     const {
-      propertyId,
       name,
       description,
       pricePerMonth,

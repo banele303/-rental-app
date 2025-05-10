@@ -3,7 +3,7 @@ import multer from 'multer';
 import { getRooms, getRoom, createRoom, updateRoom, deleteRoom } from '../controllers/roomControllers';
 import { authMiddleware } from "../middleware/authMiddleware";;
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 // Setup multer for memory storage (for S3 uploads)
 const storage = multer.memoryStorage();

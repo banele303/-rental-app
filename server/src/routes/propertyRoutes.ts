@@ -7,7 +7,7 @@ import {
   updateProperty,
   deleteProperty,
 } from "../controllers/propertyControllers";
-import { getRooms, createRoom } from "../controllers/roomControllers";
+import { getRooms, getRoom, createRoom, updateRoom, deleteRoom } from "../controllers/roomControllers";
 import { getPropertyLeases } from "../controllers/leaseControllers";
 
 import { authMiddleware } from "../middleware/authMiddleware";
@@ -20,8 +20,14 @@ const router = express.Router();
 router.get("/", getProperties);
 router.get("/:id", getProperty);
 
-// Add nested routes for rooms and leases
-router.get("/:propertyId/rooms", getRooms);
+// Add flat routes for rooms - specific routes must come before parameterized routes
+router.get("/rooms/single/:id", getRoom);
+router.get("/rooms/:propertyId", getRooms);
+router.post("/rooms/:propertyId", authMiddleware(["admin", "manager"]), upload.array("photos", 10), createRoom);
+router.put("/rooms/:id", authMiddleware(["admin", "manager"]), upload.array("photos", 10), updateRoom);
+router.delete("/rooms/:id", authMiddleware(["admin", "manager"]), deleteRoom);
+
+// Lease routes
 router.get("/:propertyId/leases", getPropertyLeases);
 
 router.post(

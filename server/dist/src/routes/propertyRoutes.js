@@ -14,8 +14,13 @@ const upload = (0, multer_1.default)({ storage: storage });
 const router = express_1.default.Router();
 router.get("/", propertyControllers_1.getProperties);
 router.get("/:id", propertyControllers_1.getProperty);
-// Add nested routes for rooms and leases
-router.get("/:propertyId/rooms", roomControllers_1.getRooms);
+// Add flat routes for rooms - specific routes must come before parameterized routes
+router.get("/rooms/single/:id", roomControllers_1.getRoom);
+router.get("/rooms/:propertyId", roomControllers_1.getRooms);
+router.post("/rooms/:propertyId", (0, authMiddleware_1.authMiddleware)(["admin", "manager"]), upload.array("photos", 10), roomControllers_1.createRoom);
+router.put("/rooms/:id", (0, authMiddleware_1.authMiddleware)(["admin", "manager"]), upload.array("photos", 10), roomControllers_1.updateRoom);
+router.delete("/rooms/:id", (0, authMiddleware_1.authMiddleware)(["admin", "manager"]), roomControllers_1.deleteRoom);
+// Lease routes
 router.get("/:propertyId/leases", leaseControllers_1.getPropertyLeases);
 router.post("/", (0, authMiddleware_1.authMiddleware)(["manager"]), upload.array("photos"), propertyControllers_1.createProperty);
 router.put("/:id", (0, authMiddleware_1.authMiddleware)(["manager"]), upload.array("photos"), propertyControllers_1.updateProperty);

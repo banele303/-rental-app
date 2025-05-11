@@ -267,7 +267,9 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // Handle files safely - use an empty array if no files
         const files = req.files || [];
         console.log(`Received ${files.length} files for room`);
-        const { propertyId, name, description, pricePerMonth, securityDeposit, squareFeet, isAvailable, availableFrom, roomType, capacity, amenities, features, } = req.body;
+        // Get propertyId from either params (for the new flat route) or body (for backward compatibility)
+        let propertyId = req.params.propertyId || req.body.propertyId;
+        const { name, description, pricePerMonth, securityDeposit, squareFeet, isAvailable, availableFrom, roomType, capacity, amenities, features, } = req.body;
         console.log("Parsed room data:", {
             propertyId,
             name,

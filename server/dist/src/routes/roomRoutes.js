@@ -8,7 +8,7 @@ const multer_1 = __importDefault(require("multer"));
 const roomControllers_1 = require("../controllers/roomControllers");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 ;
-const router = express_1.default.Router();
+const router = express_1.default.Router({ mergeParams: true });
 // Setup multer for memory storage (for S3 uploads)
 const storage = multer_1.default.memoryStorage();
 const upload = (0, multer_1.default)({

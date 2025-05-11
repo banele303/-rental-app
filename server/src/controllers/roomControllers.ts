@@ -455,10 +455,9 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
 
       // After creating the room, update the associated property to ensure proper linking
       try {
-        // Get existing property data including rooms
+        // Get existing property data
         const property = await prisma.property.findUnique({
-          where: { id: numericPropertyId },
-          include: { rooms: true }
+          where: { id: numericPropertyId }
         });
         
         if (property) {
@@ -467,8 +466,7 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
           await prisma.property.update({
             where: { id: numericPropertyId },
             data: { 
-              // When using Prisma client, we don't need to manually set updatedAt
-              // It will be updated automatically
+              // The relation name in the schema is 'rooms' (lowercase plural)
               rooms: { connect: { id: newRoom.id } }
             }
           });

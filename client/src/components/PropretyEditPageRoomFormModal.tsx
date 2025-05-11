@@ -99,7 +99,7 @@ export function PropertyEditPageRoomFormModal({
       setPhotosToDeleteModal([]);
       setReplacePhotosFlagModal(false);
     }
-  }, [isOpen, initialRoomData, propertyId, resetRoomForm]);
+  }, [isOpen, initialRoomData, propertyId, resetRoomForm, setCurrentPhotosInModal, setNewPhotoFilesModal, setPhotosToDeleteModal, setReplacePhotosFlagModal]);
 
   const handleFileChangeModal = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewPhotoFilesModal(e.target.files);

@@ -227,7 +227,7 @@ const Map = () => {
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">No Properties in {filters.location}</h3>
             <p className="text-gray-600 mb-4">
-              We couldn't find any properties in this location. The map is showing the searched area, but there are currently no listings available here.
+              We couldn&apos;t find any properties in this location. The map is showing the searched area, but there are currently no listings available here.
             </p>
           </div>
         </div>

@@ -192,7 +192,7 @@ const Listings = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No properties found in {filters.location}</h3>
             <p className="text-gray-600 text-center max-w-md mb-6">
-              We couldn't find any properties in this location. Try searching for a different area or check out our other listings.  
+              We couldn&apos;t find any properties in this location. Try searching for a different area or check out our other listings.  
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <button 

@@ -122,7 +122,7 @@ const FiltersBar = () => {
       if (data.features && data.features.length > 0) {
         // Find the best match for South African locations
         // First try to find townships or places specifically in South Africa
-        let southAfricanFeatures = data.features.filter((feature: MapboxFeature) => {
+        const southAfricanFeatures = data.features.filter((feature: MapboxFeature) => {
           // Check if this is explicitly a South African location
           const isSouthAfrican = feature.place_name.toLowerCase().includes('south africa') ||
             (feature.context && feature.context.some(ctx => 

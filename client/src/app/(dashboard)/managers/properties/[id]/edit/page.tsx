@@ -158,7 +158,7 @@ export default function EditPropertyPage() {
       setReplacePropertyPhotosFlag(false);
       setIsOverallPageLoading(false);
     }
-  }, [fetchedPropertyData, propertyForm]);
+  }, [fetchedPropertyData, propertyForm, setCurrentPropertyPhotos, setNewPropertyPhotoFiles, setPropertyPhotosMarkedForDelete, setReplacePropertyPhotosFlag, setIsOverallPageLoading]);
 
   useEffect(() => {
     if (isPropertyError && !isLoadingProperty) {

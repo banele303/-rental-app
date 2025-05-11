@@ -192,8 +192,6 @@ export function PropertyEditPageRoomFormModal({
               type="multi-select" 
               options={Object.values(ModalAmenityEnum).map(a => ({ value: a, label: a }))} 
               className={multiSelectStyles}
-              itemClassName={multiSelectItemStyles}
-              selectedItemClassName={multiSelectItemSelectedStyles}
             />
             <ModalCreateFormField 
               name="features" 
@@ -201,8 +199,6 @@ export function PropertyEditPageRoomFormModal({
               type="multi-select" 
               options={["Private Balcony", "Walk-in Closet", "Corner Room", "Good View", "Spacious", "Bright", "Recently Renovated"].map(f => ({ value: f, label: f }))} 
               className={multiSelectStyles}
-              itemClassName={multiSelectItemStyles}
-              selectedItemClassName={multiSelectItemSelectedStyles}
             />
 
             {/* Photo Management for Room */}

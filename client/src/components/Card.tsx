@@ -94,11 +94,11 @@ function PropertyCard({
         {/* Subtle overlay gradient */}
         {/* <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20 z-10" /> */}
 
-        {/* Price tag */}
+        {/* Price tag - Now clearly in Rands */}
         <div className="absolute top-3 left-3 z-20">
-          <div className="bg-white shadow-md text-gray-800 px-3 py-1.5 rounded-md flex items-center border border-gray-100">
-            <span className="font-bold">R{property.pricePerMonth.toFixed(0)}</span>
-            <span className="text-xs text-gray-500 ml-1">/mo</span>
+          <div className="bg-blue-600 shadow-md text-white px-3 py-1.5 rounded-md flex items-center border border-blue-700">
+            <span className="font-bold">R {property.pricePerMonth.toLocaleString('en-ZA')}</span>
+            <span className="text-xs text-blue-100 ml-1">/month</span>
           </div>
         </div>
         
@@ -154,23 +154,65 @@ function PropertyCard({
 
         <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 border border-gray-100">
-            <Bed className="h-4 w-4 mb-1 text-gray-500" />
+            <Bed className="h-4 w-4 mb-1 text-blue-500" />
             <span className="font-medium text-gray-800">{property.beds}</span>
             <span className="text-xs text-gray-500">Beds</span>
           </div>
 
           <div className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 border border-gray-100">
-            <Bath className="h-4 w-4 mb-1 text-gray-500" />
+            <Bath className="h-4 w-4 mb-1 text-blue-500" />
             <span className="font-medium text-gray-800">{property.baths}</span>
             <span className="text-xs text-gray-500">Baths</span>
           </div>
 
           <div className="flex flex-col items-center justify-center p-2 rounded-md bg-gray-50 border border-gray-100">
-            <Home className="h-4 w-4 mb-1 text-gray-500" />
+            <Home className="h-4 w-4 mb-1 text-blue-500" />
             <span className="font-medium text-gray-800">{property.squareFeet}</span>
             <span className="text-xs text-gray-500">m²</span>
           </div>
         </div>
+        
+        {/* Room Information Section - Detailed view */}
+        {property.availableRooms !== undefined && property.availableRooms > 0 && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+            <h3 className="text-sm font-medium text-blue-800 mb-2 flex items-center">
+              <Bed className="h-4 w-4 mr-1" /> Available Rooms
+            </h3>
+            <div className="space-y-2">
+              {/* Room example 1 */}
+              <div className="bg-white p-2 rounded border border-blue-100 flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium">Standard Room</p>
+                  <p className="text-xs text-gray-500">Private Bath • 18m²</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-blue-600">R {Math.round(property.pricePerMonth * 0.6).toLocaleString('en-ZA')}</p>
+                  <p className="text-xs text-gray-500">per month</p>
+                </div>
+              </div>
+              
+              {/* Room example 2 */}
+              {property.availableRooms > 1 && (
+                <div className="bg-white p-2 rounded border border-blue-100 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium">Deluxe Room</p>
+                    <p className="text-xs text-gray-500">Private Bath • 22m²</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-blue-600">R {Math.round(property.pricePerMonth * 0.8).toLocaleString('en-ZA')}</p>
+                    <p className="text-xs text-gray-500">per month</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-center mt-1">
+                <Link href={propertyLink || `#`} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                  View all {property.availableRooms} available rooms
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Favorite button - only show for tenants */}
         {showFavoriteButton && userRole === "tenant" && (

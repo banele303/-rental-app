@@ -100,18 +100,40 @@ const FiltersBar = () => {
     try {
       // Don't search if input is empty
       if (!searchInput.trim()) return
+      
+      // Always append South Africa to the search query if not already present
+      let searchQuery = searchInput.trim()
+      if (!searchQuery.toLowerCase().includes('south africa')) {
+        searchQuery += ', South Africa'
+      }
 
-      // Search for locations without country restriction
+      console.log('Searching for location:', searchQuery)
+      
+      // Search for locations with South Africa context and country restriction
+      // Adding country=za parameter to restrict results to South Africa
+      // Adding types parameter to prioritize place,region,locality,neighborhood for better city/township matching
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput)}.json?access_token=${
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }&fuzzyMatch=true&types=place,locality,neighborhood,address,poi`,
+        }&fuzzyMatch=true&types=place,locality,neighborhood,region,address&country=za&limit=5&language=en`,
       )
       const data = await response.json()
       
       if (data.features && data.features.length > 0) {
-        // Use the first result directly
-        const feature = data.features[0];
+        // Find the best match for South African locations
+        // First try to find townships or places specifically in South Africa
+        let southAfricanFeatures = data.features.filter((feature: MapboxFeature) => {
+          // Check if this is explicitly a South African location
+          const isSouthAfrican = feature.place_name.toLowerCase().includes('south africa') ||
+            (feature.context && feature.context.some(ctx => 
+              ctx.id.startsWith('country') && ctx.short_code === 'za'
+            ))
+          return isSouthAfrican
+        })
+        
+        // Use South African results if available, otherwise fall back to the first result
+        const feature = southAfricanFeatures.length > 0 ? southAfricanFeatures[0] : data.features[0];
+        console.log('Selected location:', feature.place_name)
         const [lng, lat] = feature.center
         
         // Extract just the place name without country

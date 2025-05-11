@@ -46,6 +46,11 @@ const dropdownItemStyles = "text-white hover:bg-gray-700/70 focus:bg-gray-700/70
 const inputStyles = "text-white bg-gray-800 border-gray-700 focus:border-primary";
 const labelStyles = "text-white font-medium";
 const checkboxLabelStyles = "text-white font-normal";
+const selectBoxStyles = "text-white bg-gray-800 border-gray-700 focus:border-primary";
+const multiSelectStyles = "text-white bg-gray-800 border-gray-700 focus:border-primary";
+const multiSelectItemStyles = "text-white hover:bg-gray-700 focus:bg-gray-700";
+const multiSelectItemSelectedStyles = "bg-blue-600 text-white hover:bg-blue-700";
+
 
 export function PropertyEditPageRoomFormModal({
   isOpen,
@@ -181,9 +186,24 @@ export function PropertyEditPageRoomFormModal({
               <ModalCreateFormField name="roomType" label="Room Type" type="select" options={Object.values(ModalRoomTypeEnum).map(rt => ({ value: rt, label: rt }))} />
               <ModalCreateFormField name="capacity" label="Capacity (Persons)" type="number" min={1} placeholder="e.g., 2" />
             </div>
-            <ModalCreateFormField name="amenities" label="Room-Specific Amenities" type="multi-select" options={Object.values(ModalAmenityEnum).map(a => ({ value: a, label: a }))} />
-            {/* Assuming features are free text for now */}
-            <ModalCreateFormField name="features" label="Room-Specific Features (comma-separated)" type="textarea" placeholder="e.g., Private Balcony, Walk-in Closet" />
+            <ModalCreateFormField 
+              name="amenities" 
+              label="Room-Specific Amenities" 
+              type="multi-select" 
+              options={Object.values(ModalAmenityEnum).map(a => ({ value: a, label: a }))} 
+              className={multiSelectStyles}
+              itemClassName={multiSelectItemStyles}
+              selectedItemClassName={multiSelectItemSelectedStyles}
+            />
+            <ModalCreateFormField 
+              name="features" 
+              label="Room-Specific Features" 
+              type="multi-select" 
+              options={["Private Balcony", "Walk-in Closet", "Corner Room", "Good View", "Spacious", "Bright", "Recently Renovated"].map(f => ({ value: f, label: f }))} 
+              className={multiSelectStyles}
+              itemClassName={multiSelectItemStyles}
+              selectedItemClassName={multiSelectItemSelectedStyles}
+            />
 
             {/* Photo Management for Room */}
             <div className="space-y-3 border-t border-border dark:border-gray-700 pt-4 mt-4">

@@ -254,10 +254,10 @@ const Navbar = () => {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-300 rounded-lg"
+                      size="icon"
+                      className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 shadow-sm transition-all duration-300 rounded-full h-10 w-10"
                     >
-                      <span>Account</span>
-                      <ChevronDown className="ml-2 h-4 w-4 text-slate-500" />
+                      <User className="h-5 w-5 text-slate-700" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent

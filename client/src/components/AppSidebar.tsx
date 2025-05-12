@@ -61,6 +61,9 @@ const AppSidebar = ({ userType }: AppSidebarProps) => {
           { icon: Settings, label: "Settings", href: "/tenants/settings" },
         ];
 
+  // Check if we're on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   return (
     <Sidebar
       collapsible="icon"
@@ -69,6 +72,8 @@ const AppSidebar = ({ userType }: AppSidebarProps) => {
         top: `${NAVBAR_HEIGHT}px`,
         height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
         width: open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)',
+        // On mobile, slide in from the left when open, otherwise hide off-screen
+        transform: isMobile ? (open ? 'translateX(0)' : 'translateX(-100%)') : 'none',
       }}
     >
       {/* Background effects */}

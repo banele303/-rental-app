@@ -55,13 +55,40 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
 // Separate component to use the sidebar context
 const DashboardContent = ({ userRole, children }: { userRole: "tenant" | "manager", children: React.ReactNode }) => {
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Auto-close sidebar on mobile
+      if (window.innerWidth < 768 && open) {
+        setOpen(false);
+      }
+    };
+    
+    // Check initially
+    checkIsMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, [open, setOpen]);
   
   return (
       <div className="min-h-screen w-full bg-[#1A1C1E]">
         <Navbar />
         <div style={{ paddingTop: `${NAVBAR_HEIGHT}px` }}>
           <div className="flex relative">
+            {/* Mobile overlay - only visible when sidebar is open on mobile */}
+            {isMobile && open && (
+              <div 
+                className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm" 
+                onClick={() => setOpen(false)}
+              />
+            )}
+            
             {/* Sidebar container */}
             <div className="sticky top-0 h-[calc(100vh-var(--navbar-height))] z-40">
               <Sidebar userType={userRole} />
@@ -69,10 +96,10 @@ const DashboardContent = ({ userRole, children }: { userRole: "tenant" | "manage
             
             {/* Main content that adjusts based on sidebar state */}
             <div 
-              className="flex-grow transition-all duration-300 ease-in-out text-white p-4 md:p-6"
+              className="flex-grow transition-all duration-300 ease-in-out text-white p-3 sm:p-4 md:p-6 overflow-x-hidden"
               style={{
                 '--navbar-height': `${NAVBAR_HEIGHT}px`,
-                marginLeft: open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)',
+                marginLeft: isMobile ? 0 : (open ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'),
               } as React.CSSProperties}
             >
               {children}

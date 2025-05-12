@@ -14,10 +14,67 @@ const Map = () => {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const filters = useAppSelector((state) => state.global.filters);
   const {
-    data: properties,
+    data: allProperties,
     isLoading,
     isError,
   } = useGetPropertiesQuery(filters);
+  
+  // Filter properties to ensure they actually match the searched location
+  const properties = React.useMemo(() => {
+    if (!allProperties || !filters.location) return allProperties;
+    
+    // If no specific location is searched, show all properties
+    if (filters.location === 'any') return allProperties;
+    
+    // Normalize the searched location (remove 'South Africa' and lowercase)
+    const searchedLocation = filters.location
+      .replace(/,\s*south africa/i, '')
+      .toLowerCase()
+      .trim();
+    
+    // Filter properties based on location match with more strict criteria
+    return allProperties.filter(property => {
+      // Get property city/address and normalize
+      const propertyCity = (property.location?.city || '').toLowerCase().trim();
+      const propertyAddress = (property.location?.address || '').toLowerCase().trim();
+      const propertyProvince = (property.location?.province || '').toLowerCase().trim();
+      
+      // For exact city matching
+      if (propertyCity === searchedLocation) {
+        return true;
+      }
+      
+      // For neighborhood/suburb/township within a city
+      // Only match if the city explicitly contains the neighborhood or vice versa
+      if (propertyCity.includes(' ' + searchedLocation) || 
+          propertyCity.includes(searchedLocation + ' ') ||
+          searchedLocation.includes(' ' + propertyCity) ||
+          searchedLocation.includes(propertyCity + ' ')) {
+        return true;
+      }
+      
+      // Match addresses but require the match to be a complete word or phrase
+      const addressWords = propertyAddress.split(/\s+|,/);
+      const searchWords = searchedLocation.split(/\s+|,/);
+      
+      // Check if the address contains all search words in sequence
+      const addressMatch = searchWords.every(word => 
+        word.length > 2 && propertyAddress.includes(word)
+      );
+      
+      // Exclude properties that don't match the correct city/province
+      // This prevents showing Johannesburg properties when searching for Pretoria
+      const incorrectCityMatch = 
+        (searchedLocation.includes('pretoria') && propertyCity.includes('johannesburg')) ||
+        (searchedLocation.includes('johannesburg') && propertyCity.includes('pretoria'));
+      
+      if (incorrectCityMatch) {
+        return false;
+      }
+      
+      return addressMatch;
+    });
+  }, [allProperties, filters.location]);
 
   useEffect(() => {
     if (isLoading || isError || !properties) return;
@@ -179,7 +236,7 @@ const Map = () => {
         markersRef.current = [];
       }
     };
-  }, [isLoading, isError, properties, filters.coordinates]);
+  }, [isLoading, isError, properties, filters.coordinates, filters.location]);
 
   if (isLoading) return (
     <div className="hidden pt-5 md:block md:basis-7/12 grow relative rounded-xl flex items-center justify-center">
